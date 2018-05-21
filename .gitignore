@@ -4,3 +4,4 @@ cf/ssh_key.pub
 **/.terraform.tfstate.lock.info
 **/terraform.tfstate
 **/terraform.tfstate.backup
+scripts/temp_build_dir

@@ -1,6 +1,7 @@
 resource "azurerm_virtual_machine_extension" "deploy" {
   name                 = "hostname"
   location             = "${var.location}"
+  depends_on           = ["azurerm_virtual_machine.bastion"]
   resource_group_name  = "${azurerm_resource_group.rg.name}"
   virtual_machine_name = "${azurerm_virtual_machine.bastion.name}"
   publisher            = "Microsoft.Azure.Extensions"
