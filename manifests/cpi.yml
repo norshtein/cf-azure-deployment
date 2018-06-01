@@ -10,8 +10,8 @@
 - type: replace
   path: /resource_pools/name=vms/stemcell?
   value:
-    url: https://andliueastasia.blob.core.windows.net/stemcells/bosh-stemcell-1234.62-azure-hyperv-ubuntu-xenial-go_agent.tgz
-    sha1: 73f1ab8685afe82a05665b503a7fcce7f1ea647f
+    url: https://andliueastasia.blob.core.windows.net/stemcells/bosh-stemcell-1234.63-azure-hyperv-ubuntu-xenial-go_agent.tgz
+    sha1: 98f084e3ce6d065c9d8604e389efc58ce67a550d
 
 # Configure sizes
 - type: replace
