@@ -91,7 +91,8 @@ resource "azurerm_virtual_machine" "bastion" {
       "USE_AVAILABILITY_ZONES": "${var.use_availability_zones}",
       "DEBUG_MODE": "${var.debug_mode}",
       "ALLOW_PRIVILEGED_CONTAINERS": "${var.allow_privileged_containers}",
-      "DISABLE_DENY_ESCALATING_EXEC": "${var.disable_deny_escalating_exec}"
+      "DISABLE_DENY_ESCALATING_EXEC": "${var.disable_deny_escalating_exec}",
+      "PRV_DNS_NAME": "${var.prv-dns-name}"
     }
 CUSTOM_DATA
   }

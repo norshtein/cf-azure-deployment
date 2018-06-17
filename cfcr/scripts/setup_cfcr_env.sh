@@ -34,6 +34,8 @@ kubernetes_master_port=$(get_setting KUBERNETES_MASTER_PORT)
 master_target_pool=$(get_setting MASTER_TARGET_POOL)
 allow_privileged_containers=$(get_setting ALLOW_PRIVILEGED_CONTAINERS)
 disable_deny_escalating_exec=$(get_setting DISABLE_DENY_ESCALATING_EXEC)
+prv_dns_name=$(get_setting PRV_DNS_NAME)
+
 cat > /etc/profile.d/bosh.sh <<EOF
 #!/bin/bash
 
@@ -56,6 +58,7 @@ export kubernetes_master_port=$kubernetes_master_port
 export master_target_pool=$master_target_pool
 export allow_privileged_containers=$allow_privileged_containers
 export disable_deny_escalating_exec=$disable_deny_escalating_exec
+export prv_dns_name=$prv_dns_name
 EOF
 
 cat > /usr/bin/update_azure_env <<'EOF'
@@ -77,6 +80,8 @@ sed -i -e 's/^\(master_vm_type:\).*\(#.*\)/\1 'master' \2/' "$1"
 sed -i -e 's/^\(worker_vm_type:\).*\(#.*\)/\1 'worker' \2/' "$1"
 sed -i -e 's/^\(allow_privileged_containers:\).*\(#.*\)/\1 '$allow_privileged_containers' \2/' "$1"
 sed -i -e 's/^\(disable_deny_escalating_exec:\).*\(#.*\)/\1 '$disable_deny_escalating_exec' \2/' "$1"
+sed -i -e 's/^\(prv_dns_name:\).*\(#.*\)/\1 '$prv_dns_name' \2/' "$1"
+
 # Generic updates
 sed -i -e 's/^\(internal_ip:\).*\(#.*\)/\1 '$cfcr_internal_ip' \2/' "$1"
 sed -i -e 's=^\(internal_cidr:\).*\(#.*\)=\1 '$cfcr_subnet_address_range' \2=' "$1"
