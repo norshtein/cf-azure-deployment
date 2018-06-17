@@ -25,9 +25,10 @@ resource "azurerm_subnet" "cfcr-subnet" {
 }
 
 resource "azurerm_dns_zone" "cfcr-private-zone" {
-  name                          = "${module.variables.prv-dns-name}"
-  resource_group_name           = "${azurerm_resource_group.rg.name}"
-  depends_on                    = ["azurerm_virtual_network.vnet"]
-  zone_type                     = "Private"
-  registration_virtual_networks = ["${azurerm_virtual_network.vnet.name}"]
+  name                = "${module.variables.prv-dns-name}"
+  resource_group_name = "${azurerm_resource_group.rg.name}"
+  depends_on          = ["azurerm_virtual_network.vnet"]
+  zone_type           = "Private"
+
+  registration_virtual_networks = ["${azurerm_virtual_network.vnet.id}"]
 }
