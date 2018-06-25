@@ -481,7 +481,7 @@ instance_groups:
             routing-api: {}
             policy-server-internal:
               name: policy-server
-            gorouter: {}
+            # gorouter: {}
   - name: cloud_controller_ng
     release: capi
     provides:
@@ -783,33 +783,33 @@ instance_groups:
         # ssl:
         #   port: 8443
 
-# - name: all-in-one-3 # router and the tcp-router
-#   # cf-router-network-properties
-#   # have property load_balancer: ((load_balancer_name))
-#   azs:
-#   - z1
-#   - z2
-#   instances: 2
-#   vm_type: minimal
-#   vm_extensions:
-#   - cf-router-network-properties
-#   stemcell: default
-#   update:
-#     serial: true
-#   networks:
-#   - name: default
-#   jobs:
-#   - name: consul_agent
-#     release: consul
-#     consumes:
-#       consul_common: {from: consul_common_link}
-#       consul_server: nil
-#       consul_client: {from: consul_client_link}
-#     properties:
-#       consul:
-#         agent:
-#           services:
-#             gorouter: {}
+- name: all-in-one-3 # router and the tcp-router
+  # cf-router-network-properties
+  # have property load_balancer: ((load_balancer_name))
+  azs:
+  - z1
+  - z2
+  instances: 2
+  vm_type: minimal
+  vm_extensions:
+  - cf-router-network-properties
+  stemcell: default
+  update:
+    serial: true
+  networks:
+  - name: default
+  jobs:
+  - name: consul_agent
+    release: consul
+    consumes:
+      consul_common: {from: consul_common_link}
+      consul_server: nil
+      consul_client: {from: consul_client_link}
+    properties:
+      consul:
+        agent:
+          services:
+            gorouter: {}
   - name: gorouter
     release: routing
     properties:
