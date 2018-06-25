@@ -12,10 +12,6 @@ addons:
   include:
     stemcell:
     - os: ubuntu-trusty
-  # exclude:
-  #   jobs:
-  #   - name: smoke_tests
-  #     release: cf-smoke-tests
   jobs:
   - name: metron_agent
     release: loggregator
@@ -27,7 +23,7 @@ addons:
             cert: "((loggregator_tls_metron.certificate))"
             key: "((loggregator_tls_metron.private_key))"
 instance_groups:
-- name: all-in-one
+- name: all-in-one-1 # consul, nats, adapter, database and diego-api
   azs:
   - z1
   - z2
@@ -61,6 +57,7 @@ instance_groups:
           services:
             silk-controller:
               name: silk-controller
+            uaa: {}
         encrypt_keys:
         - "((consul_encrypt_key))"
         agent_cert: "((consul_agent.certificate))"
@@ -84,7 +81,7 @@ instance_groups:
     properties:
       scalablesyslog:
         adapter:
-          health: 8080 # listen on.
+          health: 8070 # listen on. we use health port to start with 807x
           port: 4443 # listen on.
           tls:
             ca: "((loggregator_ca.certificate))"
@@ -250,27 +247,6 @@ instance_groups:
         ca_cert: "((loggregator_ca.certificate))"
         cert: "((loggregator_tls_metron.certificate))"
         key: "((loggregator_tls_metron.private_key))"
-- name: uaa
-  azs:
-  - z1
-  - z2
-  instances: 2
-  vm_type: minimal
-  stemcell: default
-  networks:
-  - name: default
-  jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
-    properties:
-      consul:
-        agent:
-          services:
-            uaa: {}
   - name: uaa
     release: uaa
     properties:
@@ -407,7 +383,7 @@ instance_groups:
             name: uaa-healthcheck
             script_path: "/var/vcap/jobs/uaa/bin/health_check"
           name: uaa
-          port: 8081 # port exposed
+          port: 8081 # uaa ever use 8080, modified to 8081.
           registration_interval: 10s
           tags:
             component: uaa
@@ -478,7 +454,7 @@ instance_groups:
             component: blobstore
           uris:
           - blobstore.((system_domain))
-- name: api
+- name: all-in-one-2 # api and the cc-worker we need this seperated because the cloud_controller_ng's pre-start used the database.
   azs:
   - z1
   - z2
@@ -486,6 +462,7 @@ instance_groups:
   vm_type: small
   vm_extensions:
   - 50GB_ephemeral_disk
+  # - cf-router-network-properties
   stemcell: default
   networks:
   - name: default
@@ -504,6 +481,7 @@ instance_groups:
             routing-api: {}
             policy-server-internal:
               name: policy-server
+            # gorouter: {}
   - name: cloud_controller_ng
     release: capi
     provides:
@@ -663,11 +641,19 @@ instance_groups:
   - name: file_server
     release: diego
     properties:
+      diego:
+        file_server:
+          debug_addr: "127.0.0.1:17005" # port exposed
+          listen_addr: "0.0.0.0:8080" # port exposed
       loggregator: *diego_loggregator_client_properties
   - name: routing-api
     release: routing
     properties:
       routing_api:
+        admin_port: 15897 # port exposed
+        port: 3000 # port exposed
+        statsd_endpoint: "localhost:8125" # port exposed
+        debug_address: "127.0.0.1:17002" # port exposed
         system_domain: "((system_domain))"
         router_groups:
         - name: default-tcp
@@ -685,6 +671,11 @@ instance_groups:
           ca_cert: "((service_cf_internal_ca.certificate))"
           client_cert: "((diego_locket_client.certificate))"
           client_key: "((diego_locket_client.private_key))"
+      consul:
+        servers: "http://127.0.0.1:8500" # port exposed
+      dns_health_check_host: uaa.service.cf.internal # port exposed
+      metron:
+        port: 3457 # port exposed
       uaa:
         ca_cert: "((uaa_ca.certificate))"
         tls_port: 8443
@@ -693,8 +684,16 @@ instance_groups:
     properties:
       cf_networking:
         policy_server:
+          debug_port: 31821 # port exposed
+          listen_ip: 0.0.0.0 # port exposed
+          listen_port: 4002 # port exposed
+          uaa_hostname: uaa.service.cf.internal # port exposed
+          uaa_port: 8443 # port exposed
           uaa_client_secret: ((uaa_clients_network_policy_secret))
           uaa_ca: ((uaa_ca.certificate))
+          cc_hostname: cloud-controller-ng.service.cf.internal # port exposed
+          cc_port: 9022 # port exposed
+          metron_port: 3457 # port exposed
           database:
             type: mysql
             username: network_policy
@@ -707,14 +706,27 @@ instance_groups:
     properties:
       cf_networking:
         policy_server_internal:
+          listen_ip: 0.0.0.0 # port exposed
+          debug_port: 31945 # port exposed
+          health_check_port: 31946 # port exposed
+          internal_listen_port: 4003 # port exposed
+          metron_port: 3457 # port exposed
           ca_cert: ((network_policy_ca.certificate))
           server_cert: ((network_policy_server.certificate))
           server_key: ((network_policy_server.private_key))
   - name: cc_uploader
     release: capi
     properties:
+      internal_hostname: cc-uploader.service.cf.internal # port exposed
+      http_port: 9090 # port exposed
+      https_port: 9091 # port exposed
       capi:
         cc_uploader:
+          bind_addr: "0.0.0.0" # port exposed
+          debug_bind_addr: "127.0.0.1" # port exposed
+          debug_port: 17018 # port exposed
+          dropsonde_port: 3457 # port exposed
+          consul_agent_port: 8500 # port exposed
           cc:
             ca_cert: "((service_cf_internal_ca.certificate))"
             client_cert: "((cc_bridge_cc_uploader.certificate))"
@@ -741,22 +753,6 @@ instance_groups:
     release: ruby-buildpack
   - name: staticfile-buildpack
     release: staticfile-buildpack
-- name: cc-worker
-  azs:
-  - z1
-  - z2
-  instances: 2
-  vm_type: minimal
-  stemcell: default
-  networks:
-  - name: default
-  jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
   - name: cloud_controller_worker
     release: capi
     properties:
@@ -786,7 +782,10 @@ instance_groups:
             secret: "((uaa_clients_cc-routing_secret))"
         # ssl:
         #   port: 8443
-- name: router
+
+- name: all-in-one-3 # router and the tcp-router
+  # cf-router-network-properties
+  # have property load_balancer: ((load_balancer_name))
   azs:
   - z1
   - z2
@@ -816,13 +815,13 @@ instance_groups:
     properties:
       router:
         debug_address: "127.0.0.1:17002" # port exposed
-        port: 80 # port exposed
+        port: 80 # port exposed, listen on.
         enable_ssl: true
         tls_pem:
         - cert_chain: "((router_ssl.certificate))"
           private_key: "((router_ssl.private_key))"
         status:
-          port: 8080 # port exposed
+          port: 8080 # port exposed health port.
           password: "((router_status_password))"
           user: router-status
         route_services_secret: "((router_route_services_secret))"
@@ -838,24 +837,6 @@ instance_groups:
         ca_cert: "((uaa_ca.certificate))"
         ssl:
           port: 8443
-- name: tcp-router
-  azs:
-  - z1
-  - z2
-  instances: 2
-  vm_type: minimal
-  stemcell: default
-  vm_extensions:
-  - cf-tcp-router-network-properties
-  networks:
-  - name: default
-  jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
   - name: tcp_router
     release: routing
     properties:
@@ -863,14 +844,20 @@ instance_groups:
         port: 3457 # port exposed
       routing_api:
         port: 3000 # port exposed
+        uri: http://routing-api.service.cf.internal # port exposed
       tcp_router:
-        health_check_port: 80 # port exposed
+        debug_address: "127.0.0.1:17003" # port exposed
+        health_check_port: 70 # port exposed, all health port changed from xx80 to xx70
         oauth_secret: "((uaa_clients_tcp_router_secret))"
         router_group: default-tcp
       uaa:
+        token_endpoint: uaa.service.cf.internal # port exposed
         ca_cert: "((uaa_ca.certificate))"
         tls_port: 8443
-- name: scheduler
+
+
+
+- name: all-in-one-4 # scheduler, doppler
   azs:
   - z1
   - z2
@@ -894,6 +881,12 @@ instance_groups:
       consul_common: {from: consul_common_link}
       consul_server: nil
       consul_client: {from: consul_client_link}
+    properties:
+      consul:
+        agent:
+          services:
+            doppler:
+              name: doppler
   - name: cfdot
     release: diego
     properties:
@@ -1022,28 +1015,6 @@ instance_groups:
               cert: "((scheduler_api_tls.certificate))"
               key: "((scheduler_api_tls.private_key))"
               cn: "cloud-controller-ng.service.cf.internal"
-- name: doppler
-  azs:
-  - z1
-  - z2
-  instances: 4
-  vm_type: minimal
-  stemcell: default
-  networks:
-  - name: default
-  jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
-    properties:
-      consul:
-        agent:
-          services:
-            doppler:
-              name: doppler
   - name: doppler
     release: loggregator
     provides:
@@ -1064,7 +1035,7 @@ instance_groups:
       metron_endpoint:
         host: "127.0.0.1"
         grpc_port: 3458
-- name: diego-cell
+- name: all-in-one-5 # diego-cell
   azs:
   - z1
   - z2
@@ -1214,7 +1185,7 @@ instance_groups:
       cf_networking:
         silk_daemon:
           listen_port: 23954 # port exposed
-- name: log-api
+- name: all-in-one-6 # log-api
   azs:
   - z1
   - z2
@@ -1710,10 +1681,6 @@ releases:
   url: https://bosh.io/d/github.com/cloudfoundry/cf-networking-release?v=1.13.0
   version: 1.13.0
   sha1: 0433fb00ad31c3534e8cea5fa57c572cd7eaff8b
-# - name: cf-smoke-tests
-#   url: https://bosh.io/d/github.com/cloudfoundry/cf-smoke-tests-release?v=40.0.3
-#   version: 40.0.3
-  sha1: 8190d27c235b6718b8a2c7f87b28257b8ca4336e
 - name: cf-syslog-drain
   url: https://bosh.io/d/github.com/cloudfoundry/cf-syslog-drain-release?v=6.5
   version: "6.5"
