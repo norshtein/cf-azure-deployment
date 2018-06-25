@@ -462,7 +462,7 @@ instance_groups:
   vm_type: small
   vm_extensions:
   - 50GB_ephemeral_disk
-  # - cf-router-network-properties
+  - cf-router-network-properties
   stemcell: default
   networks:
   - name: default
@@ -481,7 +481,7 @@ instance_groups:
             routing-api: {}
             policy-server-internal:
               name: policy-server
-            # gorouter: {}
+            gorouter: {}
   - name: cloud_controller_ng
     release: capi
     provides:
@@ -643,8 +643,8 @@ instance_groups:
     properties:
       diego:
         file_server:
-          debug_addr: "127.0.0.1:17005" # port exposed
-          listen_addr: "0.0.0.0:8080" # port exposed
+          debug_addr: "127.0.0.1:17001" # port exposed
+          listen_addr: "0.0.0.0:8081" # port exposed
       loggregator: *diego_loggregator_client_properties
   - name: routing-api
     release: routing
@@ -783,38 +783,38 @@ instance_groups:
         # ssl:
         #   port: 8443
 
-- name: all-in-one-3 # router and the tcp-router
-  # cf-router-network-properties
-  # have property load_balancer: ((load_balancer_name))
-  azs:
-  - z1
-  - z2
-  instances: 2
-  vm_type: minimal
-  vm_extensions:
-  - cf-router-network-properties
-  stemcell: default
-  update:
-    serial: true
-  networks:
-  - name: default
-  jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
-    properties:
-      consul:
-        agent:
-          services:
-            gorouter: {}
+# - name: all-in-one-3 # router and the tcp-router
+#   # cf-router-network-properties
+#   # have property load_balancer: ((load_balancer_name))
+#   azs:
+#   - z1
+#   - z2
+#   instances: 2
+#   vm_type: minimal
+#   vm_extensions:
+#   - cf-router-network-properties
+#   stemcell: default
+#   update:
+#     serial: true
+#   networks:
+#   - name: default
+#   jobs:
+#   - name: consul_agent
+#     release: consul
+#     consumes:
+#       consul_common: {from: consul_common_link}
+#       consul_server: nil
+#       consul_client: {from: consul_client_link}
+#     properties:
+#       consul:
+#         agent:
+#           services:
+#             gorouter: {}
   - name: gorouter
     release: routing
     properties:
       router:
-        debug_address: "127.0.0.1:17002" # port exposed
+        debug_address: "127.0.0.1:17003" # port exposed
         port: 80 # port exposed, listen on.
         enable_ssl: true
         tls_pem:
@@ -846,7 +846,7 @@ instance_groups:
         port: 3000 # port exposed
         uri: http://routing-api.service.cf.internal # port exposed
       tcp_router:
-        debug_address: "127.0.0.1:17003" # port exposed
+        debug_address: "127.0.0.1:17004" # port exposed
         health_check_port: 70 # port exposed, all health port changed from xx80 to xx70
         oauth_secret: "((uaa_clients_tcp_router_secret))"
         router_group: default-tcp
@@ -896,7 +896,7 @@ instance_groups:
     properties:
       diego:
         auctioneer:
-          debug_addr: "127.0.0.1:17001" # port exposed
+          debug_addr: "127.0.0.1:17005" # port exposed
           listen_addr: "0.0.0.0:9016" # port exposed
           bbs: &diego_bbs_client_properties
             api_location: "bbs.service.cf.internal:8889" # port exposed
@@ -1089,7 +1089,7 @@ instance_groups:
           instance_identity_ca_cert: ((diego_instance_identity_ca.certificate))
           instance_identity_key: ((diego_instance_identity_ca.private_key))
         rep:
-          debug_addr: "127.0.0.1:17008" # port exposed
+          debug_addr: "127.0.0.1:17006" # port exposed
           listen_addr_admin: "127.0.0.1:1800" # port exposed
           advertise_domain: "cell.service.cf.internal" # port exposed
           listen_addr_securable: "0.0.0.0:1801" # port exposed
@@ -1124,7 +1124,7 @@ instance_groups:
             ca_cert: "((service_cf_internal_ca.certificate))"
             client_cert: "((diego_bbs_client.certificate))"
             client_key: "((diego_bbs_client.private_key))"
-          debug_addr: "127.0.0.1:17009" # port exposed
+          debug_addr: "127.0.0.1:17007" # port exposed
           healthcheck_address: "127.0.0.1:17011" # port exposed
           nats:
             port: 4222 # port exposed
