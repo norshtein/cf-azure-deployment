@@ -23,27 +23,27 @@
 # - type: replace
 #   path: /instance_groups/name=all-in-one-4/vm_type
 #   value: debug
-- type: replace
-  path: /instance_groups/name=all-in-one-5/vm_type
-  value: debug
 # - type: replace
-#   path: /instance_groups/name=all-in-one-3/vm_type
+#   path: /instance_groups/name=all-in-one-5/vm_type
 #   value: debug
 - type: replace
-  path: /instance_groups/name=all-in-one-2/vm_type
+  path: /instance_groups/name=all-in-one-3/vm_type
   value: debug
 - type: replace
   path: /instance_groups/name=all-in-one-2/vm_type
   value: debug
+# - type: replace
+#   path: /instance_groups/name=all-in-one-2/vm_type
+#   value: debug
 # - type: replace
 #   path: /instance_groups/name=adapter/vm_type
 #   value: debug
-# - type: replace
-#   path: /instance_groups/name=all-in-one-4/vm_type
-#   value: debug
 - type: replace
-  path: /instance_groups/name=all-in-one-6/vm_type
+  path: /instance_groups/name=all-in-one-4/vm_type
   value: debug
+# - type: replace
+#   path: /instance_groups/name=all-in-one-6/vm_type
+#   value: debug
 # - type: replace
 #   path: /instance_groups/name=all-in-one-3/vm_type
 #   value: debug

@@ -973,7 +973,7 @@ instance_groups:
       metron_endpoint:
         host: "127.0.0.1"
         grpc_port: 3458
-- name: all-in-one-5 # diego-cell
+- name: all-in-one-3 # diego-cell
   azs:
   - z1
   - z2
@@ -1123,7 +1123,7 @@ instance_groups:
       cf_networking:
         silk_daemon:
           listen_port: 23954 # port exposed
-- name: all-in-one-6 # log-api
+- name: all-in-one-4 # log-api
   azs:
   - z1
   - z2
