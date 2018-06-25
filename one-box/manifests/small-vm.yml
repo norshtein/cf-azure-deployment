@@ -20,9 +20,9 @@
 # - type: replace
 #   path: /instance_groups/name=uaa/vm_type
 #   value: debug
-- type: replace
-  path: /instance_groups/name=all-in-one-4/vm_type
-  value: debug
+# - type: replace
+#   path: /instance_groups/name=all-in-one-4/vm_type
+#   value: debug
 - type: replace
   path: /instance_groups/name=all-in-one-5/vm_type
   value: debug
@@ -38,9 +38,9 @@
 # - type: replace
 #   path: /instance_groups/name=adapter/vm_type
 #   value: debug
-- type: replace
-  path: /instance_groups/name=all-in-one-4/vm_type
-  value: debug
+# - type: replace
+#   path: /instance_groups/name=all-in-one-4/vm_type
+#   value: debug
 - type: replace
   path: /instance_groups/name=all-in-one-6/vm_type
   value: debug

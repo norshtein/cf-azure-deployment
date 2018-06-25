@@ -58,6 +58,8 @@ instance_groups:
             silk-controller:
               name: silk-controller
             uaa: {}
+            doppler:
+              name: doppler
         encrypt_keys:
         - "((consul_encrypt_key))"
         agent_cert: "((consul_agent.certificate))"
@@ -826,39 +828,6 @@ instance_groups:
         token_endpoint: uaa.service.cf.internal # port exposed
         ca_cert: "((uaa_ca.certificate))"
         tls_port: 8443
-
-
-
-- name: all-in-one-4 # scheduler, doppler
-  azs:
-  - z1
-  - z2
-  instances: 2
-  migrated_from:
-  - {name: cc-bridge}
-  - {name: cc-clock}
-  - {name: diego-brain}
-  vm_type: minimal
-  # vm_extensions:
-  # - diego-ssh-proxy-network-properties
-  stemcell: default
-  update:
-    serial: true
-  networks:
-  - name: default
-  jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
-    properties:
-      consul:
-        agent:
-          services:
-            doppler:
-              name: doppler
   - name: cfdot
     release: diego
     properties:
@@ -923,9 +892,6 @@ instance_groups:
             secret: "((uaa_clients_cc-routing_secret))"
         ssl:
           port: 8443 # port exposed
-  - name: statsd_injector
-    release: statsd-injector
-    properties: *statsd_injector_properties
   - name: tps
     release: capi
     properties:
@@ -951,8 +917,8 @@ instance_groups:
     properties:
       diego:
         ssh_proxy:
-          listen_addr: "0.0.0.0:2222" # port exposed
-          healthcheck_listen_addr: "0.0.0.0:2223" # port exposed
+          listen_addr: "0.0.0.0:2224" # port exposed
+          healthcheck_listen_addr: "0.0.0.0:2225" # port exposed
           debug_addr: "127.0.0.1:17016" # port exposed
           enable_cf_auth: true
           host_key: "((diego_ssh_proxy_host_key.private_key))"
@@ -973,7 +939,7 @@ instance_groups:
         adapter:
           port: 4443 # port exposed
         scheduler:
-          health: 8080
+          health: 8071 # port exposed
           api:
             url: https://cloud-controller-ng.service.cf.internal:9023
           tls:
