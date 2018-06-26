@@ -484,6 +484,11 @@ instance_groups:
             policy-server-internal:
               name: policy-server
             gorouter: {}
+  - name: cflinuxfs2-rootfs-setup
+    release: cflinuxfs2
+    properties:
+      cflinuxfs2-rootfs:
+        trusted_certs: ((application_ca.certificate))
   - name: cloud_controller_ng
     release: capi
     provides:
@@ -994,7 +999,7 @@ instance_groups:
     properties:
       consul:
         agent:
-          node_name_includes_id: true
+          # node_name_includes_id: true
   - name: cflinuxfs2-rootfs-setup
     release: cflinuxfs2
     properties:
