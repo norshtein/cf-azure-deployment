@@ -1117,6 +1117,13 @@ instance_groups:
         silk_controller:
           hostname: "silk-controller.service.cf.internal" # port exposed
           listen_port: 4103 # port exposed
+  - name: iptables-logger
+    release: cf-networking
+    properties:
+      cf_networking:
+        iptables_logger:
+          kernel_log_file: /var/log/kern-iptables.log
+          metron_port: 3457
   - name: cni
     release: cf-networking
     properties:
