@@ -83,7 +83,7 @@ instance_groups:
     properties:
       scalablesyslog:
         adapter:
-          health: 8070 # listen on. we use health port to start with 807x
+          health: 8070 # listen on. origin 8080, we use health port to start with 807x
           port: 4443 # listen on.
           tls:
             ca: "((loggregator_ca.certificate))"
@@ -266,7 +266,7 @@ instance_groups:
               certificate: "((uaa_login_saml.certificate))"
               passphrase: ""
       uaa:
-        port: 8081 # port exposed
+        port: 8081 # port exposed, origin 8080.
         ssl:
           port: 8443 # port exposed
         sslCertificate: "((uaa_ssl.certificate))"
@@ -385,7 +385,7 @@ instance_groups:
             name: uaa-healthcheck
             script_path: "/var/vcap/jobs/uaa/bin/health_check"
           name: uaa
-          port: 8081 # uaa ever use 8080, modified to 8081.
+          port: 8081 # port exposed, origin 8080, modified to 8081.
           registration_interval: 10s
           tags:
             component: uaa
@@ -486,6 +486,8 @@ instance_groups:
             policy-server-internal:
               name: policy-server
             gorouter: {}
+            # loggregator_trafficcontroller: {}
+            # reverse_log_proxy: {}
   - name: cflinuxfs2-rootfs-setup
     release: cflinuxfs2
     properties:
@@ -538,10 +540,10 @@ instance_groups:
         diego:
           bbs:
             url: https://bbs.service.cf.internal:8889 # port exposed
-          file_server_url: http://file-server.service.cf.internal:8081 # port exposed
+          file_server_url: http://file-server.service.cf.internal:8380 # port exposed, origin 8080f.
           cc_uploader_url: https://cc-uploader.service.cf.internal:9091 # port exposed
         loggregator:
-          internal_url: "http://loggregator-trafficcontroller.service.cf.internal:8081" # port exposed
+          internal_url: "http://loggregator-trafficcontroller.service.cf.internal:8481" # port exposed
         stacks:
         - name: cflinuxfs2
           description: Cloud Foundry Linux-based filesystem
@@ -658,8 +660,8 @@ instance_groups:
     properties:
       diego:
         file_server:
-          debug_addr: "127.0.0.1:17001" # port exposed
-          listen_addr: "0.0.0.0:8081" # port exposed
+          debug_addr: "127.0.0.1:17001" # port exposed, origin 17005.
+          listen_addr: "0.0.0.0:8380" # port exposed, origin 8080, listen on.
       loggregator: *diego_loggregator_client_properties
   - name: routing-api
     release: routing
@@ -808,7 +810,7 @@ instance_groups:
         - cert_chain: "((router_ssl.certificate))"
           private_key: "((router_ssl.private_key))"
         status:
-          port: 8080 # port exposed health port.
+          port: 8080 # port exposed, /varz /routes listen on.
           password: "((router_status_password))"
           user: router-status
         route_services_secret: "((router_route_services_secret))"
@@ -886,7 +888,7 @@ instance_groups:
         diego:
           bbs:
             url: https://bbs.service.cf.internal:8889 # port exposed
-          file_server_url: http://file-server.service.cf.internal:8081 # port exposed
+          file_server_url: http://file-server.service.cf.internal:8380 # port exposed
           cc_uploader_url: http://cc-uploader.service.cf.internal:9090 # port exposed
       credhub_api:
         hostname: "credhub.service.cf.internal" # port exposed
@@ -912,7 +914,7 @@ instance_groups:
         tps:
           dropsonde_port: 3457 # port exposed
           consul_agent_port: 8500 # port exposed
-          traffic_controller_url: "ws://loggregator-trafficcontroller.service.cf.internal:8081" # port exposed
+          traffic_controller_url: "ws://loggregator-trafficcontroller.service.cf.internal:8481" # port exposed
           bbs: *diego_bbs_client_properties
           watcher:
             debug_addr: "127.0.0.1:17015" # port exposed
@@ -1143,7 +1145,7 @@ instance_groups:
         internal_url: https://uaa.service.cf.internal:8443 # port exposed
         ca_cert: "((uaa_ca.certificate))"
       loggregator:
-        outgoing_dropsonde_port: 8081 # port exposed
+        outgoing_dropsonde_port: 8481 # port exposed, origin 8081
         tls:
           cc_trafficcontroller:
             cert: "((loggregator_tls_cc_tc.certificate))"
@@ -1164,7 +1166,7 @@ instance_groups:
           ca_cert: "((service_cf_internal_ca.certificate))"
       doppler:
         grpc_port: 8082 # port exposed
-        outgoing_port: 8081 # port exposed
+        outgoing_port: 8481 # port exposed, origin 8081, listen on. will be registered in route_registrar? I guess.
       metron_endpoint:
         host: "127.0.0.1" # port exposed
         dropsonde_port: 3457 # port exposed
@@ -1180,7 +1182,7 @@ instance_groups:
     properties:
       reverse_log_proxy:
         egress:
-          port: 8182 # port exposed, original is 8082
+          port: 8182 # port exposed, original is 8082, to keep the same as the grpc_port? i guess.
         health_addr: "localhost:0" # port exposed
         pprof:
           port: 0 # port exposed
@@ -1201,12 +1203,12 @@ instance_groups:
       route_registrar:
         routes:
         - name: loggregator
-          port: 8080
+          port: 8080 # port exposed, origin 8080
           registration_interval: 20s
           uris:
           - loggregator.((system_domain))
         - name: doppler
-          port: 8081
+          port: 8481 # port exposed, origin 8081
           registration_interval: 20s
           uris:
           - doppler.((system_domain))
