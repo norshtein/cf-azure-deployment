@@ -461,9 +461,10 @@ instance_groups:
   - z1
   - z2
   instances: 2
+  persistent_disk_type: 100GB
   vm_type: small
   vm_extensions:
-  - 50GB_ephemeral_disk
+  - 100GB_ephemeral_disk
   - cf-router-network-properties
   stemcell: default
   networks:
@@ -983,6 +984,7 @@ instance_groups:
   - z1
   - z2
   instances: 2
+  persistent_disk_type: 100GB
   vm_type: small-highmem
   vm_extensions:
   - 100GB_ephemeral_disk
