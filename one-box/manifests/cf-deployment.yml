@@ -456,7 +456,7 @@ instance_groups:
             component: blobstore
           uris:
           - blobstore.((system_domain))
-- name: all-in-one-2 # api and the cc-worker we need this seperated because the cloud_controller_ng's pre-start used the database.
+- name: all-in-one-2 # api and the cc-worker, diego-cell, log-api, we need this seperated because the cloud_controller_ng's pre-start used the database.
   azs:
   - z1
   - z2
@@ -486,8 +486,8 @@ instance_groups:
             policy-server-internal:
               name: policy-server
             gorouter: {}
-            # loggregator_trafficcontroller: {}
-            # reverse_log_proxy: {}
+            loggregator_trafficcontroller: {}
+            reverse_log_proxy: {}
   - name: cflinuxfs2-rootfs-setup
     release: cflinuxfs2
     properties:
@@ -652,6 +652,17 @@ instance_groups:
           registration_interval: 20s
           uris:
           - api.((system_domain))/networking
+        - name: loggregator
+          port: 8580 # port exposed, origin 8080
+          registration_interval: 20s
+          uris:
+          - loggregator.((system_domain))
+        - name: doppler
+          port: 8481 # port exposed, origin 8081
+          registration_interval: 20s
+          uris:
+          - doppler.((system_domain))
+          - "*.doppler.((system_domain))"
   - name: statsd_injector
     release: statsd-injector
     properties: *statsd_injector_properties
@@ -992,37 +1003,6 @@ instance_groups:
       metron_endpoint:
         host: "127.0.0.1"
         grpc_port: 3458
-- name: all-in-one-3 # diego-cell and log-api
-  azs:
-  - z1
-  - z2
-  instances: 2
-  persistent_disk_type: 100GB
-  vm_type: small-highmem
-  vm_extensions:
-  - 100GB_ephemeral_disk
-  stemcell: default
-  networks:
-  - name: default
-  jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
-    properties:
-      consul:
-        agent:
-          # node_name_includes_id: true
-          services:
-            loggregator_trafficcontroller: {}
-            reverse_log_proxy: {}
-  - name: cflinuxfs2-rootfs-setup
-    release: cflinuxfs2
-    properties:
-      cflinuxfs2-rootfs:
-        trusted_certs: ((application_ca.certificate))
   - name: garden
     release: garden-runc
     properties:
@@ -1204,22 +1184,22 @@ instance_groups:
       metron_endpoint:
         host: "127.0.0.1" # port exposed
         grpc_port: 3458 # port exposed
-  - name: route_registrar
-    release: routing
-    properties:
-      route_registrar:
-        routes:
-        - name: loggregator
-          port: 8580 # port exposed, origin 8080
-          registration_interval: 20s
-          uris:
-          - loggregator.((system_domain))
-        - name: doppler
-          port: 8481 # port exposed, origin 8081
-          registration_interval: 20s
-          uris:
-          - doppler.((system_domain))
-          - "*.doppler.((system_domain))"
+  # - name: route_registrar
+  #   release: routing
+  #   properties:
+  #     route_registrar:
+  #       routes:
+  #       - name: loggregator
+  #         port: 8580 # port exposed, origin 8080
+  #         registration_interval: 20s
+  #         uris:
+  #         - loggregator.((system_domain))
+  #       - name: doppler
+  #         port: 8481 # port exposed, origin 8081
+  #         registration_interval: 20s
+  #         uris:
+  #         - doppler.((system_domain))
+  #         - "*.doppler.((system_domain))"
 
 variables:
 - name: blobstore_admin_users_password

@@ -44,6 +44,6 @@
 # - type: replace
 #   path: /instance_groups/name=all-in-one-6/vm_type
 #   value: small
-- type: replace
-  path: /instance_groups/name=all-in-one-3/vm_type
-  value: small
+# - type: replace
+#   path: /instance_groups/name=all-in-one-3/vm_type
+#   value: small
