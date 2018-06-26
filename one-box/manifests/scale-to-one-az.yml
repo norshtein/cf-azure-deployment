@@ -26,9 +26,9 @@
 # - type: replace
 #   path: /instance_groups/name=all-in-one-5/instances
 #   value: 1
-- type: replace
-  path: /instance_groups/name=all-in-one-3/instances
-  value: 1
+# - type: replace
+#   path: /instance_groups/name=all-in-one-3/instances
+#   value: 1
 - type: replace
   path: /instance_groups/name=all-in-one-2/instances
   value: 1
@@ -90,6 +90,6 @@
 # - type: replace
 #   path: /instance_groups/name=all-in-one-6/azs
 #   value: [ z1 ]
-- type: replace
-  path: /instance_groups/name=all-in-one-3/azs
-  value: [ z1 ]
+# - type: replace
+#   path: /instance_groups/name=all-in-one-3/azs
+#   value: [ z1 ]
