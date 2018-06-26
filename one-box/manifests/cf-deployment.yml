@@ -479,7 +479,7 @@ instance_groups:
     properties:
       consul:
         agent:
-          node_name_includes_id: true
+          # node_name_includes_id: true
           services:
             cloud_controller_ng: {}
             routing-api: {}
@@ -992,7 +992,37 @@ instance_groups:
       metron_endpoint:
         host: "127.0.0.1"
         grpc_port: 3458
-
+- name: all-in-one-3 # diego-cell and log-api
+  azs:
+  - z1
+  - z2
+  instances: 2
+  persistent_disk_type: 100GB
+  vm_type: small-highmem
+  vm_extensions:
+  - 100GB_ephemeral_disk
+  stemcell: default
+  networks:
+  - name: default
+  jobs:
+  - name: consul_agent
+    release: consul
+    consumes:
+      consul_common: {from: consul_common_link}
+      consul_server: nil
+      consul_client: {from: consul_client_link}
+    properties:
+      consul:
+        agent:
+          # node_name_includes_id: true
+          services:
+            loggregator_trafficcontroller: {}
+            reverse_log_proxy: {}
+  - name: cflinuxfs2-rootfs-setup
+    release: cflinuxfs2
+    properties:
+      cflinuxfs2-rootfs:
+        trusted_certs: ((application_ca.certificate))
   - name: garden
     release: garden-runc
     properties:
@@ -1112,30 +1142,7 @@ instance_groups:
       cf_networking:
         silk_daemon:
           listen_port: 23954 # port exposed
-- name: all-in-one-4 # log-api
-  azs:
-  - z1
-  - z2
-  instances: 2
-  vm_type: minimal
-  stemcell: default
-  update:
-    serial: true
-  networks:
-  - name: default
-  jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
-    properties:
-      consul:
-        agent:
-          services:
-            loggregator_trafficcontroller: {}
-            reverse_log_proxy: {}
+
   - name: loggregator_trafficcontroller
     release: loggregator
     consumes:
