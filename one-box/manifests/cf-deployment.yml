@@ -1104,6 +1104,7 @@ instance_groups:
     release: cf-networking
     properties:
       cf_networking:
+        disable: false
         vtep_port: 4789 # port exposed
         rep_listen_addr_admin: 127.0.0.1:1800 # port exposed
         silk_daemon:
@@ -1120,6 +1121,10 @@ instance_groups:
     release: cf-networking
     properties:
       cf_networking:
+        disable: false
+        iptables_logging: true
+        iptables_denied_logs_per_sec: 1
+        iptables_accepted_udp_logs_per_sec: 100
         silk_daemon:
           listen_port: 23954 # port exposed
 
