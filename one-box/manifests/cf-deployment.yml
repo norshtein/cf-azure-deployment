@@ -1203,7 +1203,7 @@ instance_groups:
       route_registrar:
         routes:
         - name: loggregator
-          port: 8080 # port exposed, origin 8080
+          port: 8580 # port exposed, origin 8080
           registration_interval: 20s
           uris:
           - loggregator.((system_domain))
