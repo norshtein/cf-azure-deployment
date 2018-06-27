@@ -31,7 +31,7 @@ resource "azurerm_network_interface" "bastion" {
 resource "azurerm_virtual_machine" "bastion" {
   name                    = "${var.prefix}-bastion"
   depends_on              = ["azurerm_network_interface.bastion"]
-  vm_size                 = "Standard_D1_v2"
+  vm_size                 = "Basic_A1"
   location                = "${var.location}"
   resource_group_name     = "${azurerm_resource_group.rg.name}"
   network_interface_ids   = ["${azurerm_network_interface.bastion.id}"]
@@ -85,16 +85,7 @@ resource "azurerm_virtual_machine" "bastion" {
       "AUTO_DEPLOY_CLOUD_FOUNDRY":"${var.auto_deploy_cf}",
       "BOSH_VM_SIZE": "${var.bosh_vm_size}",
       "SERVICE_PRINCIPAL_TYPE": "Password",
-      "USE_AVAILABILITY_ZONES": "${var.use_availability_zones}",
-      "USE_VCONTAINER": "${var.use_vcontainer}",
-      "DEBUG_MODE": "${var.debug_mode}",
-
-      "ACI_LOCATION": "${var.location}",
-      "ACI_RESOURCE_GROUP": "${azurerm_resource_group.rg.name}",
-      "ACI_STORAGE_ACCOUNT_NAME":  "${join("", azurerm_storage_account.aci-default-storage.*.name)}",
-      "ACI_STORAGE_ACCOUNT_KEY": "${join("", azurerm_storage_account.aci-default-storage.*.primary_access_key)}",
-      "SMB_PROXY_IP": "${var.aci_smb_proxy_ip}",
-      "SMB_PROXY_PORT": "${var.aci_smb_proxy_port}"
+      "USE_AVAILABILITY_ZONES": "${var.use_availability_zones}"
     }
 CUSTOM_DATA
   }

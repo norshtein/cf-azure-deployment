@@ -41,7 +41,7 @@ variable "prefix" {
 
 variable "bosh_vm_size" {
   type    = "string"
-  default = "Standard_D1_v2"
+  default = "Basic_A1"
 }
 
 variable "network_cidr" {
@@ -59,28 +59,6 @@ variable "auto_deploy_cf" {
 }
 
 variable "use_availability_zones" {
-  type        = "string"
-  default     = "disabled"
-  description = "enabled or disabled"
-}
-
-variable "use_vcontainer" {
-  type        = "string"
-  default     = "disabled"
-  description = "enabled or disabled"
-}
-
-variable "aci_smb_proxy_ip" {
-  type    = "string"
-  default = ""
-}
-
-variable "aci_smb_proxy_port" {
-  type    = "string"
-  default = ""
-}
-
-variable "debug_mode" {
   type        = "string"
   default     = "disabled"
   description = "enabled or disabled"

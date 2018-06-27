@@ -1,0 +1,1556 @@
+ azs:
+ - name: z1
+ - name: z2
+ - name: z3
+  
+ vm_types:
+ - cloud_properties:
+     ephemeral_disk:
+       size: 10240
+     instance_type: Standard_A1_v2
+   name: debug
+ - cloud_properties:
+     ephemeral_disk:
+       size: 10240
+     instance_type: Standard_D1_v2
+   name: minimal
+ - cloud_properties:
+     ephemeral_disk:
+       size: 10240
+     instance_type: Standard_D2_v2
+   name: small
+ - cloud_properties:
+     ephemeral_disk:
+       size: 10240
+     instance_type: Standard_D12_v2
+   name: small-highmem
+  
+ vm_extensions:
+ - cloud_properties:
+     ephemeral_disk:
+       size: 51200
+   name: 50GB_ephemeral_disk
+ - cloud_properties:
+     ephemeral_disk:
+       size: 102400
+   name: 100GB_ephemeral_disk
+ - cloud_properties:
+     load_balancer: andliu-cf-cf-balancer
+   name: cf-router-network-properties
+ - name: cf-tcp-router-network-properties
+ - name: diego-ssh-proxy-network-properties
+  
+ compilation:
+   az: z1
+   network: default
+   reuse_compilation_vms: true
+   vm_extensions:
+   - 100GB_ephemeral_disk
+   vm_type: small
+   workers: 6
+  
+ networks:
+ - name: default
+   subnets:
+   - azs:
+     - z1
+     - z2
+     - z3
+     cloud_properties:
+       security_group: andliu-cf-cf-sg
+       subnet_name: andliu-cf-cf-subnet
+       virtual_network_name: andliu-cf-vnet
+     dns:
+     - 168.63.129.16
+     - 8.8.8.8
+     gateway: 10.0.16.1
+     range: 10.0.16.0/20
+     reserved:
+     - 10.0.16.1/30
+   type: manual
+ - name: vip
+   type: vip
+  
+ disk_types:
+ - disk_size: 1024
+   name: default
+ - disk_size: 1024
+   name: 1GB
+ - disk_size: 5120
+   name: 5GB
+ - disk_size: 10240
+   name: 10GB
+ - disk_size: 51200
+   name: 50GB
+ - disk_size: 102400
+   name: 100GB
+ - disk_size: 512000
+   name: 500GB
+ - disk_size: 1048576
+   name: 1TB
+ - disk_size: 4193280
+   name: 4TB
+  
+ stemcells:
+ - alias: default
+   os: ubuntu-trusty
+   version: '3586.7'
+  
+ releases:
+ - name: binary-buildpack
+   sha1: 3fe4a2397b10483954e136c468309f2358786b21
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/binary-buildpack-1.0.18-ubuntu-trusty-3586.7-20180509-175935-154935191.tgz
+   version: 1.0.18
+ - name: capi
+   sha1: a70df6cbe920f543293a40113007188d45255bc9
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/capi-1.55.0-ubuntu-trusty-3586.7-20180509-180648-235039929.tgz
+   version: 1.55.0
+ - name: cf-mysql
+   sha1: f3a1bb4289af9ff5d32344c782356ede99f76088
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/cf-mysql-36.13.0-ubuntu-trusty-3586.7-20180509-183535-187967175.tgz
+   version: 36.13.0
+ - name: cf-networking
+   sha1: 6d041e297ab84ee6da98549c53a8dc3a23be7cd7
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/cf-networking-1.13.0-ubuntu-trusty-3586.7-20180509-180254-971192989.tgz
+   version: 1.13.0
+ - name: cf-syslog-drain
+   sha1: 10983f797ab4277fff7ec56a3b3257b11bcec5ed
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/cf-syslog-drain-6.5-ubuntu-trusty-3586.7-20180509-180231-889142971.tgz
+   version: '6.5'
+ - name: cflinuxfs2
+   sha1: eca355eff55f284c0d8a17625739f24fc7be2295
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/cflinuxfs2-1.206.0-ubuntu-trusty-3586.7-20180509-180055-601116303.tgz
+   version: 1.206.0
+ - name: consul
+   sha1: 68056206274f87aeb81afd1c590a9055b06748ea
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/consul-192-ubuntu-trusty-3586.7-20180509-180237-984841107.tgz
+   version: '192'
+ - name: diego
+   sha1: a67e984a8abe47746650b57c1d9a34c117757514
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/diego-2.6.0-ubuntu-trusty-3586.7-20180509-180457-839297493.tgz
+   version: 2.6.0
+ - name: dotnet-core-buildpack
+   sha1: 27ff415c1ad1159bc5755a6b58aef3b8aa8de9ce
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/dotnet-core-buildpack-2.0.6-ubuntu-trusty-3586.7-20180509-175853-781656311.tgz
+   version: 2.0.6
+ - name: garden-runc
+   sha1: fdf226632ea43b4cb07914ff52454b2d62e5c0f7
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/garden-runc-1.13.1-ubuntu-trusty-3586.7-20180509-180402-635586458.tgz
+   version: 1.13.1
+ - name: go-buildpack
+   sha1: a0f5cf980128ff33b60dfe9f3652c9466734a474
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/go-buildpack-1.8.21-ubuntu-trusty-3586.7-20180509-175950-100708159.tgz
+   version: 1.8.21
+ - name: java-buildpack
+   sha1: 19736693e60f97e9d985c0582453b533481cc6fe
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/java-buildpack-4.10-ubuntu-trusty-3586.7-20180509-175935-172978628.tgz
+   version: '4.10'
+ - name: loggregator
+   sha1: 8b3ca3753be5ecddb36fcce56c5a7e8dec452634
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/loggregator-102.1-ubuntu-trusty-3586.7-20180509-180237-948649107.tgz
+   version: '102.1'
+ - name: nats
+   sha1: eeb4ed775aedc735f53ae5c5773ecb03acc29d62
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/nats-23-ubuntu-trusty-3586.7-20180509-180055-644328127.tgz
+   version: '23'
+ - name: nodejs-buildpack
+   sha1: e7d515d4448b1aed0c0bc14dc9cdc5d85d7ab5de
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/nodejs-buildpack-1.6.22-ubuntu-trusty-3586.7-20180509-175853-426598345.tgz
+   version: 1.6.22
+ - name: php-buildpack
+   sha1: 7fec6f105f3b9acadab401e47075fe01b3017dc7
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/php-buildpack-4.3.53-ubuntu-trusty-3586.7-20180509-175935-992845419.tgz
+   version: 4.3.53
+ - name: python-buildpack
+   sha1: dfdb965271ebf02acf1c68851d37b5ed4dac7b95
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/python-buildpack-1.6.14-ubuntu-trusty-3586.7-20180509-175937-629265005.tgz
+   version: 1.6.14
+ - name: routing
+   sha1: 4ae898901821c8952a5dbc98661f619cee354a44
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/routing-0.176.0-ubuntu-trusty-3586.7-20180509-180237-954994204.tgz
+   version: 0.176.0
+ - name: ruby-buildpack
+   sha1: 57f1de4ef5e71891f018fd6c17fb1e20de0c1b07
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/ruby-buildpack-1.7.16-ubuntu-trusty-3586.7-20180509-175935-984286906.tgz
+   version: 1.7.16
+ - name: staticfile-buildpack
+   sha1: 37ceebea450b80e9773d489f9dd77b5881bd46ba
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/staticfile-buildpack-1.4.27-ubuntu-trusty-3586.7-20180509-175950-123092712.tgz
+   version: 1.4.27
+ - name: statsd-injector
+   sha1: 1576110582d0583772a06536d1df5a073918a620
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/statsd-injector-1.3.0-ubuntu-trusty-3586.7-20180509-180046-447856154.tgz
+   version: 1.3.0
+ - name: uaa
+   sha1: fcf1398f1ee9c5077a13bad0da42beac9d0626fd
+   stemcell:
+     os: ubuntu-trusty
+     version: '3586.7'
+   url: https://storage.googleapis.com/cf-deployment-compiled-releases/uaa-58-ubuntu-trusty-3586.7-20180509-180351-347866451.tgz
+   version: '58'
+  
+ update:
+   canaries: 1
+   canary_watch_time: 30000-1200000
+   max_in_flight: 1
+   serial: true
+   update_watch_time: 5000-1200000
+  
+ addons:
+ - include:
+     stemcell:
+     - os: ubuntu-trusty
+   jobs:
+   - name: metron_agent
+     properties:
+       loggregator:
+         tls:
+           ca_cert: "<redacted>"
+           metron:
+             cert: "<redacted>"
+             key: "<redacted>"
+     release: loggregator
+   name: metron_agent
+  
+ instance_groups:
+ - azs:
+   - z1
+   instances: 1
+   jobs:
+   - consumes:
+       consul_client:
+         from: consul_client_link
+       consul_common:
+         from: consul_common_link
+       consul_server:
+         from: consul_server_link
+     name: consul_agent
+     properties:
+       consul:
+         agent:
+           domain: "<redacted>"
+           mode: "<redacted>"
+           services:
+             doppler:
+               name: "<redacted>"
+             gorouter: {}
+             routing-api: {}
+             silk-controller:
+               name: "<redacted>"
+             uaa: {}
+         agent_cert: "<redacted>"
+         agent_key: "<redacted>"
+         ca_cert: "<redacted>"
+         encrypt_keys:
+         - "<redacted>"
+         server_cert: "<redacted>"
+         server_key: "<redacted>"
+     provides:
+       consul_client:
+         as: consul_client_link
+         shared: true
+       consul_common:
+         as: consul_common_link
+         shared: true
+       consul_server:
+         as: consul_server_link
+         shared: true
+     release: consul
+   - name: nats
+     properties:
+       nats:
+         monitor_port: "<redacted>"
+         password: "<redacted>"
+         port: "<redacted>"
+         prof_port: "<redacted>"
+         user: "<redacted>"
+     provides:
+       nats:
+         as: nats
+         shared: true
+     release: nats
+   - name: adapter
+     properties:
+       scalablesyslog:
+         adapter:
+           health: "<redacted>"
+           logs:
+             addr: "<redacted>"
+           port: "<redacted>"
+           tls:
+             ca: "<redacted>"
+             cert: "<redacted>"
+             cn: "<redacted>"
+             key: "<redacted>"
+         adapter_rlp:
+           tls:
+             ca: "<redacted>"
+             cert: "<redacted>"
+             cn: "<redacted>"
+             key: "<redacted>"
+         metric_ingress_addr: "<redacted>"
+     release: cf-syslog-drain
+   - name: mysql
+     properties:
+       cf_mysql:
+         mysql:
+           admin_password: "<redacted>"
+           binlog_enabled: "<redacted>"
+           cluster_health:
+             password: "<redacted>"
+           galera_healthcheck:
+             db_password: "<redacted>"
+             endpoint_password: "<redacted>"
+             endpoint_username: "<redacted>"
+             port: "<redacted>"
+           port: "<redacted>"
+           seeded_databases:
+           - name: "<redacted>"
+             password: "<redacted>"
+             username: "<redacted>"
+           - name: "<redacted>"
+             password: "<redacted>"
+             username: "<redacted>"
+           - name: "<redacted>"
+             password: "<redacted>"
+             username: "<redacted>"
+           - name: "<redacted>"
+             password: "<redacted>"
+             username: "<redacted>"
+           - name: "<redacted>"
+             password: "<redacted>"
+             username: "<redacted>"
+           - name: "<redacted>"
+             password: "<redacted>"
+             username: "<redacted>"
+           - name: "<redacted>"
+             password: "<redacted>"
+             username: "<redacted>"
+     release: cf-mysql
+   - name: proxy
+     properties:
+       cf_mysql:
+         galera_healthcheck:
+           port: "<redacted>"
+         mysql:
+           port: "<redacted>"
+         proxy:
+           api_aggregator_port: "<redacted>"
+           api_password: "<redacted>"
+           api_port: "<redacted>"
+           consul_enabled: "<redacted>"
+           consul_service_name: "<redacted>"
+           health_port: "<redacted>"
+           port: "<redacted>"
+     release: cf-mysql
+   - name: cfdot
+     properties:
+       tls:
+         ca_certificate: "<redacted>"
+         certificate: "<redacted>"
+         private_key: "<redacted>"
+     release: diego
+   - name: bbs
+     properties:
+       diego:
+         bbs:
+           active_key_label: "<redacted>"
+           auctioneer:
+             api_location: "<redacted>"
+             ca_cert: "<redacted>"
+             client_cert: "<redacted>"
+             client_key: "<redacted>"
+           ca_cert: "<redacted>"
+           debug_addr: "<redacted>"
+           encryption_keys:
+           - label: "<redacted>"
+             passphrase: "<redacted>"
+           health_addr: "<redacted>"
+           listen_addr: "<redacted>"
+           locket:
+             api_location: "<redacted>"
+           rep:
+             ca_cert: "<redacted>"
+             client_cert: "<redacted>"
+             client_key: "<redacted>"
+             require_tls: "<redacted>"
+           server_cert: "<redacted>"
+           server_key: "<redacted>"
+           sql:
+             db_driver: "<redacted>"
+             db_host: "<redacted>"
+             db_password: "<redacted>"
+             db_port: "<redacted>"
+             db_schema: "<redacted>"
+             db_username: "<redacted>"
+       loggregator:
+         ca_cert: "<redacted>"
+         cert: "<redacted>"
+         key: "<redacted>"
+         use_v2_api: "<redacted>"
+         v2_api_port: "<redacted>"
+     release: diego
+   - name: silk-controller
+     properties:
+       cf_networking:
+         silk_controller:
+           ca_cert: "<redacted>"
+           database:
+             host: "<redacted>"
+             name: "<redacted>"
+             password: "<redacted>"
+             port: "<redacted>"
+             type: "<redacted>"
+             username: "<redacted>"
+           debug_port: "<redacted>"
+           health_check_port: "<redacted>"
+           listen_port: "<redacted>"
+           metron_port: "<redacted>"
+           server_cert: "<redacted>"
+           server_key: "<redacted>"
+         silk_daemon:
+           ca_cert: "<redacted>"
+           client_cert: "<redacted>"
+           client_key: "<redacted>"
+     release: cf-networking
+   - name: locket
+     properties:
+       diego:
+         locket:
+           debug_addr: "<redacted>"
+           listen_addr: "<redacted>"
+           sql:
+             db_driver: "<redacted>"
+             db_host: "<redacted>"
+             db_password: "<redacted>"
+             db_port: "<redacted>"
+             db_schema: "<redacted>"
+             db_username: "<redacted>"
+       loggregator:
+         ca_cert: "<redacted>"
+         cert: "<redacted>"
+         key: "<redacted>"
+         use_v2_api: "<redacted>"
+         v2_api_port: "<redacted>"
+       tls:
+         ca_cert: "<redacted>"
+         cert: "<redacted>"
+         key: "<redacted>"
+     release: diego
+   - name: uaa
+     properties:
+       encryption:
+         active_key_label: "<redacted>"
+         encryption_keys:
+         - label: "<redacted>"
+           passphrase: "<redacted>"
+       login:
+         saml:
+           activeKeyId: "<redacted>"
+           keys:
+             key-1:
+               certificate: "<redacted>"
+               key: "<redacted>"
+               passphrase: "<redacted>"
+       uaa:
+         admin:
+           client_secret: "<redacted>"
+         clients:
+           cc-service-dashboards:
+             authorities: "<redacted>"
+             authorized-grant-types: "<redacted>"
+             scope: "<redacted>"
+             secret: "<redacted>"
+           cc_routing:
+             authorities: "<redacted>"
+             authorized-grant-types: "<redacted>"
+             secret: "<redacted>"
+           cc_service_key_client:
+             authorities: "<redacted>"
+             authorized-grant-types: "<redacted>"
+             secret: "<redacted>"
+           cf:
+             access-token-validity: "<redacted>"
+             authorities: "<redacted>"
+             authorized-grant-types: "<redacted>"
+             override: "<redacted>"
+             refresh-token-validity: "<redacted>"
+             scope: "<redacted>"
+             secret: "<redacted>"
+           cloud_controller_username_lookup:
+             authorities: "<redacted>"
+             authorized-grant-types: "<redacted>"
+             secret: "<redacted>"
+           doppler:
+             authorities: "<redacted>"
+             authorized-grant-types: "<redacted>"
+             override: "<redacted>"
+             secret: "<redacted>"
+           gorouter:
+             authorities: "<redacted>"
+             authorized-grant-types: "<redacted>"
+             secret: "<redacted>"
+           network-policy:
+             authorities: "<redacted>"
+             authorized-grant-types: "<redacted>"
+             secret: "<redacted>"
+           routing_api_client:
+             authorities: "<redacted>"
+             authorized-grant-types: "<redacted>"
+             secret: "<redacted>"
+           ssh-proxy:
+             authorized-grant-types: "<redacted>"
+             autoapprove: "<redacted>"
+             override: "<redacted>"
+             redirect-uri: "<redacted>"
+             scope: "<redacted>"
+             secret: "<redacted>"
+           tcp_emitter:
+             authorities: "<redacted>"
+             authorized-grant-types: "<redacted>"
+             secret: "<redacted>"
+           tcp_router:
+             authorities: "<redacted>"
+             authorized-grant-types: "<redacted>"
+             secret: "<redacted>"
+         jwt:
+           policy:
+             active_key_id: "<redacted>"
+             keys:
+               key-1:
+                 signingKey: "<redacted>"
+         logging_level: "<redacted>"
+         port: "<redacted>"
+         scim:
+           users:
+           - groups:
+             - "<redacted>"
+             - "<redacted>"
+             - "<redacted>"
+             - "<redacted>"
+             - "<redacted>"
+             - "<redacted>"
+             - "<redacted>"
+             - "<redacted>"
+             name: "<redacted>"
+             password: "<redacted>"
+           - groups:
+             - "<redacted>"
+             - "<redacted>"
+             - "<redacted>"
+             - "<redacted>"
+             - "<redacted>"
+             - "<redacted>"
+             - "<redacted>"
+             name: "<redacted>"
+             password: "<redacted>"
+         ssl:
+           port: "<redacted>"
+         sslCertificate: "<redacted>"
+         sslPrivateKey: "<redacted>"
+         url: "<redacted>"
+         zones:
+           internal:
+             hostnames:
+             - "<redacted>"
+       uaadb:
+         databases:
+         - name: "<redacted>"
+           tag: "<redacted>"
+         db_scheme: "<redacted>"
+         port: "<redacted>"
+         roles:
+         - name: "<redacted>"
+           password: "<redacted>"
+           tag: "<redacted>"
+     release: uaa
+   - name: route_registrar
+     properties:
+       route_registrar:
+         routes:
+         - health_check:
+             name: "<redacted>"
+             script_path: "<redacted>"
+           name: "<redacted>"
+           port: "<redacted>"
+           registration_interval: "<redacted>"
+           tags:
+             component: "<redacted>"
+           uris:
+           - "<redacted>"
+           - "<redacted>"
+           - "<redacted>"
+           - "<redacted>"
+     release: routing
+   - name: statsd_injector
+     properties:
+       loggregator:
+         tls:
+           ca_cert: "<redacted>"
+           statsd_injector:
+             cert: "<redacted>"
+             key: "<redacted>"
+       statsd_injector:
+         metron_port: "<redacted>"
+         statsd_port: "<redacted>"
+     release: statsd-injector
+   - name: gorouter
+     properties:
+       router:
+         debug_address: "<redacted>"
+         enable_ssl: "<redacted>"
+         frontend_idle_timeout: "<redacted>"
+         port: "<redacted>"
+         route_services_secret: "<redacted>"
+         status:
+           password: "<redacted>"
+           port: "<redacted>"
+           user: "<redacted>"
+         tls_pem:
+         - cert_chain: "<redacted>"
+           private_key: "<redacted>"
+         tracing:
+           enable_zipkin: "<redacted>"
+       routing_api:
+         enabled: "<redacted>"
+         port: "<redacted>"
+       uaa:
+         ca_cert: "<redacted>"
+         clients:
+           gorouter:
+             secret: "<redacted>"
+         ssl:
+           port: "<redacted>"
+     release: routing
+   - name: tcp_router
+     properties:
+       metron:
+         port: "<redacted>"
+       routing_api:
+         port: "<redacted>"
+         uri: "<redacted>"
+       tcp_router:
+         debug_address: "<redacted>"
+         health_check_port: "<redacted>"
+         oauth_secret: "<redacted>"
+         router_group: "<redacted>"
+       uaa:
+         ca_cert: "<redacted>"
+         tls_port: "<redacted>"
+         token_endpoint: "<redacted>"
+     release: routing
+   - name: routing-api
+     properties:
+       consul:
+         servers: "<redacted>"
+       dns_health_check_host: "<redacted>"
+       metron:
+         port: "<redacted>"
+       routing_api:
+         admin_port: "<redacted>"
+         debug_address: "<redacted>"
+         locket:
+           api_location: "<redacted>"
+           ca_cert: "<redacted>"
+           client_cert: "<redacted>"
+           client_key: "<redacted>"
+         port: "<redacted>"
+         router_groups:
+         - name: "<redacted>"
+           reservable_ports: "<redacted>"
+           type: "<redacted>"
+         sqldb:
+           host: "<redacted>"
+           password: "<redacted>"
+           port: "<redacted>"
+           schema: "<redacted>"
+           type: "<redacted>"
+           username: "<redacted>"
+         statsd_endpoint: "<redacted>"
+         system_domain: "<redacted>"
+       uaa:
+         ca_cert: "<redacted>"
+         tls_port: "<redacted>"
+     release: routing
+   name: all-in-one-1
+   networks:
+   - name: default
+   persistent_disk_type: 100GB
+   stemcell: default
+   update:
+     serial: true
+   vm_extensions:
+   - 100GB_ephemeral_disk
+   - cf-router-network-properties
+   vm_type: small
+ - azs:
+   - z1
+   instances: 1
+   jobs:
+   - consumes:
+       consul_client:
+         from: consul_client_link
+       consul_common:
+         from: consul_common_link
+       consul_server: nil
+     name: consul_agent
+     properties:
+       consul:
+         agent:
+           services:
+             cloud_controller_ng: {}
+             loggregator_trafficcontroller: {}
+             policy-server-internal:
+               name: "<redacted>"
+             reverse_log_proxy: {}
+     release: consul
+   - name: cflinuxfs2-rootfs-setup
+     properties:
+       cflinuxfs2-rootfs:
+         trusted_certs: "<redacted>"
+     release: cflinuxfs2
+   - name: cloud_controller_ng
+     properties:
+       app_domains:
+       - "<redacted>"
+       app_ssh:
+         host_key_fingerprint: "<redacted>"
+         port: "<redacted>"
+       cc:
+         buildpacks:
+           buildpack_directory_key: "<redacted>"
+           fog_connection:
+             azure_storage_access_key: "<redacted>"
+             azure_storage_account_name: "<redacted>"
+             environment: "<redacted>"
+             provider: "<redacted>"
+           webdav_config:
+             public_endpoint: "<redacted>"
+         bulk_api_password: "<redacted>"
+         db_encryption_key: "<redacted>"
+         default_app_memory: "<redacted>"
+         default_running_security_groups:
+         - "<redacted>"
+         - "<redacted>"
+         default_staging_security_groups:
+         - "<redacted>"
+         - "<redacted>"
+         diego:
+           bbs:
+             url: "<redacted>"
+           cc_uploader_url: "<redacted>"
+           file_server_url: "<redacted>"
+         droplets:
+           droplet_directory_key: "<redacted>"
+           fog_connection:
+             azure_storage_access_key: "<redacted>"
+             azure_storage_account_name: "<redacted>"
+             environment: "<redacted>"
+             provider: "<redacted>"
+           webdav_config:
+             public_endpoint: "<redacted>"
+         external_port: "<redacted>"
+         gorouter_tls_port: "<redacted>"
+         install_buildpacks:
+         - name: "<redacted>"
+           package: "<redacted>"
+         - name: "<redacted>"
+           package: "<redacted>"
+         - name: "<redacted>"
+           package: "<redacted>"
+         - name: "<redacted>"
+           package: "<redacted>"
+         - name: "<redacted>"
+           package: "<redacted>"
+         - name: "<redacted>"
+           package: "<redacted>"
+         - name: "<redacted>"
+           package: "<redacted>"
+         - name: "<redacted>"
+           package: "<redacted>"
+         - name: "<redacted>"
+           package: "<redacted>"
+         internal_api_password: "<redacted>"
+         loggregator:
+           internal_url: "<redacted>"
+         mutual_tls:
+           ca_cert: "<redacted>"
+           private_key: "<redacted>"
+           public_cert: "<redacted>"
+         packages:
+           app_package_directory_key: "<redacted>"
+           fog_connection:
+             azure_storage_access_key: "<redacted>"
+             azure_storage_account_name: "<redacted>"
+             environment: "<redacted>"
+             provider: "<redacted>"
+           webdav_config:
+             public_endpoint: "<redacted>"
+         resource_pool:
+           fog_connection:
+             azure_storage_access_key: "<redacted>"
+             azure_storage_account_name: "<redacted>"
+             environment: "<redacted>"
+             provider: "<redacted>"
+           resource_directory_key: "<redacted>"
+           webdav_config:
+             public_endpoint: "<redacted>"
+         security_group_definitions:
+         - name: "<redacted>"
+           rules:
+           - destination: "<redacted>"
+             protocol: "<redacted>"
+           - destination: "<redacted>"
+             protocol: "<redacted>"
+           - destination: "<redacted>"
+             protocol: "<redacted>"
+           - destination: "<redacted>"
+             protocol: "<redacted>"
+           - destination: "<redacted>"
+             protocol: "<redacted>"
+           - destination: "<redacted>"
+             protocol: "<redacted>"
+           - destination: "<redacted>"
+             protocol: "<redacted>"
+         - name: "<redacted>"
+           rules:
+           - destination: "<redacted>"
+             ports: "<redacted>"
+             protocol: "<redacted>"
+           - destination: "<redacted>"
+             ports: "<redacted>"
+             protocol: "<redacted>"
+         stacks:
+         - description: "<redacted>"
+           name: "<redacted>"
+         staging_upload_password: "<redacted>"
+         staging_upload_user: "<redacted>"
+         statsd_host: "<redacted>"
+         statsd_port: "<redacted>"
+         tls_port: "<redacted>"
+       ccdb:
+         databases:
+         - name: "<redacted>"
+           tag: "<redacted>"
+         db_scheme: "<redacted>"
+         port: "<redacted>"
+         roles:
+         - name: "<redacted>"
+           password: "<redacted>"
+           tag: "<redacted>"
+       credhub_api:
+         hostnme: "<redacted>"
+       doppler:
+         port: "<redacted>"
+       metron_endpoint:
+         host: "<redacted>"
+         port: "<redacted>"
+       router:
+         route_services_secret: "<redacted>"
+       routing_api:
+         enabled: "<redacted>"
+       ssl:
+         skip_cert_verify: "<redacted>"
+       system_domain: "<redacted>"
+       uaa:
+         ca_cert: "<redacted>"
+         clients:
+           cc-service-dashboards:
+             secret: "<redacted>"
+           cc_routing:
+             secret: "<redacted>"
+           cc_service_key_client:
+             secret: "<redacted>"
+           cloud_controller_username_lookup:
+             secret: "<redacted>"
+         ssl:
+           port: "<redacted>"
+         url: "<redacted>"
+     provides:
+       cloud_controller:
+         as: cloud_controller
+         shared: true
+     release: capi
+   - name: route_registrar
+     properties:
+       route_registrar:
+         routes:
+         - health_check:
+             name: "<redacted>"
+             script_path: "<redacted>"
+             timeout: "<redacted>"
+           name: "<redacted>"
+           port: "<redacted>"
+           registration_interval: "<redacted>"
+           tags:
+             component: "<redacted>"
+           uris:
+           - "<redacted>"
+         - name: "<redacted>"
+           port: "<redacted>"
+           registration_interval: "<redacted>"
+           uris:
+           - "<redacted>"
+         - name: "<redacted>"
+           port: "<redacted>"
+           registration_interval: "<redacted>"
+           uris:
+           - "<redacted>"
+         - name: "<redacted>"
+           port: "<redacted>"
+           registration_interval: "<redacted>"
+           uris:
+           - "<redacted>"
+           - "<redacted>"
+     release: routing
+   - name: statsd_injector
+     properties:
+       loggregator:
+         tls:
+           ca_cert: "<redacted>"
+           statsd_injector:
+             cert: "<redacted>"
+             key: "<redacted>"
+       statsd_injector:
+         metron_port: "<redacted>"
+         statsd_port: "<redacted>"
+     release: statsd-injector
+   - name: file_server
+     properties:
+       diego:
+         file_server:
+           debug_addr: "<redacted>"
+           listen_addr: "<redacted>"
+       loggregator:
+         ca_cert: "<redacted>"
+         cert: "<redacted>"
+         key: "<redacted>"
+         use_v2_api: "<redacted>"
+         v2_api_port: "<redacted>"
+     release: diego
+   - name: policy-server
+     properties:
+       cf_networking:
+         policy_server:
+           cc_hostname: "<redacted>"
+           cc_port: "<redacted>"
+           database:
+             host: "<redacted>"
+             name: "<redacted>"
+             password: "<redacted>"
+             port: "<redacted>"
+             type: "<redacted>"
+             username: "<redacted>"
+           debug_port: "<redacted>"
+           listen_ip: "<redacted>"
+           listen_port: "<redacted>"
+           metron_port: "<redacted>"
+           uaa_ca: "<redacted>"
+           uaa_client_secret: "<redacted>"
+           uaa_hostname: "<redacted>"
+           uaa_port: "<redacted>"
+     release: cf-networking
+   - name: policy-server-internal
+     properties:
+       cf_networking:
+         policy_server_internal:
+           ca_cert: "<redacted>"
+           debug_port: "<redacted>"
+           health_check_port: "<redacted>"
+           internal_listen_port: "<redacted>"
+           listen_ip: "<redacted>"
+           metron_port: "<redacted>"
+           server_cert: "<redacted>"
+           server_key: "<redacted>"
+     release: cf-networking
+   - name: cc_uploader
+     properties:
+       capi:
+         cc_uploader:
+           bind_addr: "<redacted>"
+           cc:
+             ca_cert: "<redacted>"
+             client_cert: "<redacted>"
+             client_key: "<redacted>"
+           consul_agent_port: "<redacted>"
+           debug_bind_addr: "<redacted>"
+           debug_port: "<redacted>"
+           dropsonde_port: "<redacted>"
+           mutual_tls:
+             ca_cert: "<redacted>"
+             server_cert: "<redacted>"
+             server_key: "<redacted>"
+       http_port: "<redacted>"
+       https_port: "<redacted>"
+       internal_hostname: "<redacted>"
+     release: capi
+   - name: binary-buildpack
+     release: binary-buildpack
+   - name: dotnet-core-buildpack
+     release: dotnet-core-buildpack
+   - name: go-buildpack
+     release: go-buildpack
+   - name: java-buildpack
+     release: java-buildpack
+   - name: nodejs-buildpack
+     release: nodejs-buildpack
+   - name: php-buildpack
+     release: php-buildpack
+   - name: python-buildpack
+     release: python-buildpack
+   - name: ruby-buildpack
+     release: ruby-buildpack
+   - name: staticfile-buildpack
+     release: staticfile-buildpack
+   - name: cloud_controller_worker
+     properties:
+       cc:
+         buildpacks:
+           buildpack_directory_key: "<redacted>"
+           fog_connection:
+             azure_storage_access_key: "<redacted>"
+             azure_storage_account_name: "<redacted>"
+             environment: "<redacted>"
+             provider: "<redacted>"
+           webdav_config:
+             public_endpoint: "<redacted>"
+         db_encryption_key: "<redacted>"
+         droplets:
+           droplet_directory_key: "<redacted>"
+           fog_connection:
+             azure_storage_access_key: "<redacted>"
+             azure_storage_account_name: "<redacted>"
+             environment: "<redacted>"
+             provider: "<redacted>"
+           webdav_config:
+             public_endpoint: "<redacted>"
+         external_port: "<redacted>"
+         internal_api_password: "<redacted>"
+         mutual_tls:
+           ca_cert: "<redacted>"
+           private_key: "<redacted>"
+           public_cert: "<redacted>"
+         packages:
+           app_package_directory_key: "<redacted>"
+           fog_connection:
+             azure_storage_access_key: "<redacted>"
+             azure_storage_account_name: "<redacted>"
+             environment: "<redacted>"
+             provider: "<redacted>"
+           webdav_config:
+             public_endpoint: "<redacted>"
+         resource_pool:
+           fog_connection:
+             azure_storage_access_key: "<redacted>"
+             azure_storage_account_name: "<redacted>"
+             environment: "<redacted>"
+             provider: "<redacted>"
+           resource_directory_key: "<redacted>"
+           webdav_config:
+             public_endpoint: "<redacted>"
+         staging_upload_password: "<redacted>"
+         staging_upload_user: "<redacted>"
+         tls_port: "<redacted>"
+       ccdb:
+         databases:
+         - name: "<redacted>"
+           tag: "<redacted>"
+         db_scheme: "<redacted>"
+         port: "<redacted>"
+         roles:
+         - name: "<redacted>"
+           password: "<redacted>"
+           tag: "<redacted>"
+       routing_api:
+         enabled: "<redacted>"
+       ssl:
+         skip_cert_verify: "<redacted>"
+       system_domain: "<redacted>"
+       uaa:
+         ca_cert: "<redacted>"
+         clients:
+           cc-service-dashboards:
+             secret: "<redacted>"
+           cc_routing:
+             secret: "<redacted>"
+     release: capi
+   - name: cfdot
+     properties:
+       tls:
+         ca_certificate: "<redacted>"
+         certificate: "<redacted>"
+         private_key: "<redacted>"
+     release: diego
+   - name: auctioneer
+     properties:
+       diego:
+         auctioneer:
+           bbs:
+             api_location: "<redacted>"
+             ca_cert: "<redacted>"
+             client_cert: "<redacted>"
+             client_key: "<redacted>"
+           ca_cert: "<redacted>"
+           debug_addr: "<redacted>"
+           listen_addr: "<redacted>"
+           locket:
+             api_location: "<redacted>"
+           rep:
+             ca_cert: "<redacted>"
+             client_cert: "<redacted>"
+             client_key: "<redacted>"
+             require_tls: "<redacted>"
+           server_cert: "<redacted>"
+           server_key: "<redacted>"
+       loggregator:
+         ca_cert: "<redacted>"
+         cert: "<redacted>"
+         key: "<redacted>"
+         use_v2_api: "<redacted>"
+         v2_api_port: "<redacted>"
+     release: diego
+   - name: cloud_controller_clock
+     properties:
+       cc:
+         buildpacks:
+           buildpack_directory_key: "<redacted>"
+           fog_connection:
+             azure_storage_access_key: "<redacted>"
+             azure_storage_account_name: "<redacted>"
+             environment: "<redacted>"
+             provider: "<redacted>"
+           webdav_config:
+             public_endpoint: "<redacted>"
+         db_encryption_key: "<redacted>"
+         diego:
+           bbs:
+             url: "<redacted>"
+           cc_uploader_url: "<redacted>"
+           file_server_url: "<redacted>"
+         droplets:
+           droplet_directory_key: "<redacted>"
+           fog_connection:
+             azure_storage_access_key: "<redacted>"
+             azure_storage_account_name: "<redacted>"
+             environment: "<redacted>"
+             provider: "<redacted>"
+           webdav_config:
+             public_endpoint: "<redacted>"
+         external_port: "<redacted>"
+         internal_api_password: "<redacted>"
+         mutual_tls:
+           ca_cert: "<redacted>"
+           private_key: "<redacted>"
+           public_cert: "<redacted>"
+         packages:
+           app_package_directory_key: "<redacted>"
+           fog_connection:
+             azure_storage_access_key: "<redacted>"
+             azure_storage_account_name: "<redacted>"
+             environment: "<redacted>"
+             provider: "<redacted>"
+           webdav_config:
+             public_endpoint: "<redacted>"
+         resource_pool:
+           fog_connection:
+             azure_storage_access_key: "<redacted>"
+             azure_storage_account_name: "<redacted>"
+             environment: "<redacted>"
+             provider: "<redacted>"
+           resource_directory_key: "<redacted>"
+           webdav_config:
+             public_endpoint: "<redacted>"
+         staging_upload_password: "<redacted>"
+         staging_upload_user: "<redacted>"
+         tls_port: "<redacted>"
+       ccdb:
+         databases:
+         - name: "<redacted>"
+           tag: "<redacted>"
+         db_scheme: "<redacted>"
+         port: "<redacted>"
+         roles:
+         - name: "<redacted>"
+           password: "<redacted>"
+           tag: "<redacted>"
+       credhub_api:
+         hostname: "<redacted>"
+       metron_endpoint:
+         host: "<redacted>"
+         port: "<redacted>"
+       routing_api:
+         enabled: "<redacted>"
+       system_domain: "<redacted>"
+       uaa:
+         ca_cert: "<redacted>"
+         clients:
+           cc-service-dashboards:
+             secret: "<redacted>"
+           cc_routing:
+             secret: "<redacted>"
+         ssl:
+           port: "<redacted>"
+     release: capi
+   - name: tps
+     properties:
+       capi:
+         tps:
+           bbs:
+             api_location: "<redacted>"
+             ca_cert: "<redacted>"
+             client_cert: "<redacted>"
+             client_key: "<redacted>"
+           cc:
+             ca_cert: "<redacted>"
+             client_cert: "<redacted>"
+             client_key: "<redacted>"
+             external_port: "<redacted>"
+             internal_service_hostname: "<redacted>"
+           consul_agent_port: "<redacted>"
+           dropsonde_port: "<redacted>"
+           listener_enabled: "<redacted>"
+           traffic_controller_url: "<redacted>"
+           watcher:
+             debug_addr: "<redacted>"
+             locket:
+               api_location: "<redacted>"
+     release: capi
+   - name: ssh_proxy
+     properties:
+       diego:
+         ssh_proxy:
+           bbs:
+             api_location: "<redacted>"
+             ca_cert: "<redacted>"
+             client_cert: "<redacted>"
+             client_key: "<redacted>"
+           cc:
+             external_port: "<redacted>"
+             internal_service_hostname: "<redacted>"
+           debug_addr: "<redacted>"
+           enable_cf_auth: "<redacted>"
+           healthcheck_listen_addr: "<redacted>"
+           host_key: "<redacted>"
+           listen_addr: "<redacted>"
+           uaa:
+             ca_cert: "<redacted>"
+             port: "<redacted>"
+             url: "<redacted>"
+           uaa_secret: "<redacted>"
+       loggregator:
+         ca_cert: "<redacted>"
+         cert: "<redacted>"
+         key: "<redacted>"
+         use_v2_api: "<redacted>"
+         v2_api_port: "<redacted>"
+     release: diego
+   - name: scheduler
+     properties:
+       scalablesyslog:
+         adapter:
+           port: "<redacted>"
+         scheduler:
+           api:
+             url: "<redacted>"
+           health: "<redacted>"
+           tls:
+             api:
+               ca: "<redacted>"
+               cert: "<redacted>"
+               cn: "<redacted>"
+               key: "<redacted>"
+             client:
+               adapter_cn: "<redacted>"
+               ca: "<redacted>"
+               cert: "<redacted>"
+               key: "<redacted>"
+     release: cf-syslog-drain
+   - name: doppler
+     properties:
+       doppler:
+         disable_announce: "<redacted>"
+         grpc_port: "<redacted>"
+         health_addr: "<redacted>"
+         pprof_port: "<redacted>"
+       loggregator:
+         disable_syslog_drains: "<redacted>"
+         tls:
+           ca_cert: "<redacted>"
+           doppler:
+             cert: "<redacted>"
+             key: "<redacted>"
+       metron_endpoint:
+         grpc_port: "<redacted>"
+         host: "<redacted>"
+     provides:
+       doppler:
+         as: doppler
+         shared: true
+     release: loggregator
+   - name: garden
+     properties:
+       garden:
+         cleanup_process_dirs_on_wait: "<redacted>"
+         debug_listen_address: "<redacted>"
+         default_container_grace_time: "<redacted>"
+         deny_networks:
+         - "<redacted>"
+         destroy_containers_on_start: "<redacted>"
+         network_plugin: "<redacted>"
+         network_plugin_extra_args:
+         - "<redacted>"
+         persistent_image_list:
+         - "<redacted>"
+       grootfs:
+         dropsonde_port: "<redacted>"
+         reserved_space_for_other_jobs_in_mb: "<redacted>"
+     release: garden-runc
+   - name: rep
+     properties:
+       containers:
+         trusted_ca_certificates:
+         - "<redacted>"
+       diego:
+         executor:
+           instance_identity_ca_cert: "<redacted>"
+           instance_identity_key: "<redacted>"
+         rep:
+           advertise_domain: "<redacted>"
+           bbs:
+             api_location: "<redacted>"
+           debug_addr: "<redacted>"
+           listen_addr_admin: "<redacted>"
+           listen_addr_securable: "<redacted>"
+           locket:
+             api_location: "<redacted>"
+           preloaded_rootfses:
+           - "<redacted>"
+       enable_declarative_healthcheck: "<redacted>"
+       loggregator:
+         ca_cert: "<redacted>"
+         cert: "<redacted>"
+         key: "<redacted>"
+         use_v2_api: "<redacted>"
+         v2_api_port: "<redacted>"
+       tls:
+         ca_cert: "<redacted>"
+         cert: "<redacted>"
+         key: "<redacted>"
+     release: diego
+   - name: route_emitter
+     properties:
+       diego:
+         route_emitter:
+           bbs:
+             api_location: "<redacted>"
+             ca_cert: "<redacted>"
+             client_cert: "<redacted>"
+             client_key: "<redacted>"
+           debug_addr: "<redacted>"
+           healthcheck_address: "<redacted>"
+           local_mode: "<redacted>"
+           nats:
+             port: "<redacted>"
+       locks:
+         locket:
+           hostname: "<redacted>"
+           port: "<redacted>"
+       loggregator:
+         ca_cert: "<redacted>"
+         cert: "<redacted>"
+         key: "<redacted>"
+         use_v2_api: "<redacted>"
+         v2_api_port: "<redacted>"
+       routing_api:
+         port: "<redacted>"
+         url: "<redacted>"
+       tcp:
+         enabled: "<redacted>"
+       uaa:
+         ca_cert: "<redacted>"
+         client_secret: "<redacted>"
+         hostname: "<redacted>"
+         port: "<redacted>"
+     release: diego
+   - name: garden-cni
+     release: cf-networking
+   - name: netmon
+     properties:
+       cf_networking:
+         netmon:
+           metron_address: "<redacted>"
+     release: cf-networking
+   - name: vxlan-policy-agent
+     properties:
+       cf_networking:
+         policy_server:
+           hostname: "<redacted>"
+           internal_listen_port: "<redacted>"
+         vxlan_policy_agent:
+           ca_cert: "<redacted>"
+           client_cert: "<redacted>"
+           client_key: "<redacted>"
+           debug_server_port: "<redacted>"
+           metron_port: "<redacted>"
+     release: cf-networking
+   - name: silk-daemon
+     properties:
+       cf_networking:
+         disable: "<redacted>"
+         rep_listen_addr_admin: "<redacted>"
+         silk_controller:
+           hostname: "<redacted>"
+           listen_port: "<redacted>"
+         silk_daemon:
+           ca_cert: "<redacted>"
+           client_cert: "<redacted>"
+           client_key: "<redacted>"
+           debug_port: "<redacted>"
+           listen_port: "<redacted>"
+           metron_port: "<redacted>"
+         vtep_port: "<redacted>"
+     release: cf-networking
+   - name: cni
+     properties:
+       cf_networking:
+         disable: "<redacted>"
+         iptables_accepted_udp_logs_per_sec: "<redacted>"
+         iptables_denied_logs_per_sec: "<redacted>"
+         iptables_logging: "<redacted>"
+         silk_daemon:
+           listen_port: "<redacted>"
+     release: cf-networking
+   - consumes:
+       doppler:
+         from: doppler
+     name: loggregator_trafficcontroller
+     properties:
+       cc:
+         internal_service_hostname: "<redacted>"
+         mutual_tls:
+           ca_cert: "<redacted>"
+         tls_port: "<redacted>"
+       doppler:
+         grpc_port: "<redacted>"
+         outgoing_port: "<redacted>"
+       loggregator:
+         outgoing_dropsonde_port: "<redacted>"
+         tls:
+           ca_cert: "<redacted>"
+           cc_trafficcontroller:
+             cert: "<redacted>"
+             key: "<redacted>"
+           trafficcontroller:
+             cert: "<redacted>"
+             key: "<redacted>"
+         uaa:
+           client_secret: "<redacted>"
+       metron_endpoint:
+         dropsonde_port: "<redacted>"
+         grpc_port: "<redacted>"
+         host: "<redacted>"
+       ssl:
+         skip_cert_verify: "<redacted>"
+       system_domain: "<redacted>"
+       traffic_controller:
+         health_addr: "<redacted>"
+         pprof_port: "<redacted>"
+       uaa:
+         ca_cert: "<redacted>"
+         internal_url: "<redacted>"
+     release: loggregator
+   - name: reverse_log_proxy
+     properties:
+       loggregator:
+         doppler:
+           grpc_port: "<redacted>"
+         tls:
+           ca_cert: "<redacted>"
+           reverse_log_proxy:
+             cert: "<redacted>"
+             key: "<redacted>"
+       metron_endpoint:
+         grpc_port: "<redacted>"
+         host: "<redacted>"
+       reverse_log_proxy:
+         egress:
+           port: "<redacted>"
+         health_addr: "<redacted>"
+         pprof:
+           port: "<redacted>"
+     provides:
+       reverse_log_proxy:
+         as: reverse_log_proxy
+         shared: true
+     release: loggregator
+   name: all-in-one-2
+   networks:
+   - name: default
+   persistent_disk_type: 100GB
+   stemcell: default
+   vm_extensions:
+   - 100GB_ephemeral_disk
+   vm_type: small

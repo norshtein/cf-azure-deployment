@@ -15,12 +15,6 @@ function get_setting() {
   echo $value
 }
 
-# VContainer
-use_vcontainer=$(get_setting USE_VCONTAINER)
-
-# Debug
-debug_mode=$(get_setting DEBUG_MODE)
-
 # Service Principal
 environment=$(get_setting ENVIRONMENT)
 service_principal_type=$(get_setting SERVICE_PRINCIPAL_TYPE)
@@ -147,37 +141,13 @@ bosh create-env ~/example_manifests/bosh.yml \\
   -v client_id=${client_id} \\
 EOF
 
-if [ "${service_principal_type}" == "Password" ]; then
-  cat >> "$home_dir/deploy_bosh.sh" << EOF
+cat >> "$home_dir/deploy_bosh.sh" << EOF
   -v client_secret="$(client_secret_or_certificate)" \\
 EOF
-elif [ "${service_principal_type}" == "Certificate" ]; then
-  cat >> "$home_dir/deploy_bosh.sh" << EOF
-  -o ~/example_manifests/use-service-principal-with-certificate.yml \\
-  -l ~/example_manifests/service-principal-certificate.yml \\
-EOF
-fi
 
-if [ "$environment" = "AzureChinaCloud" ]; then
-  cat >> "$home_dir/deploy_bosh.sh" << EOF
-  -o ~/example_manifests/use-managed-disks.yml \\
-  -o ~/example_manifests/use-mirror-releases-for-bosh.yml \\
-  -o ~/example_manifests/custom-ntp-server.yml
-EOF
-elif [ "$environment" = "AzureStack" ]; then
-  cat >> "$home_dir/deploy_bosh.sh" << EOF
-  -v storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
-  -o ~/example_manifests/azure-stack-properties.yml \\
-  -v azure_stack_domain=$(get_setting AZURE_STACK_DOMAIN) \\
-  -v azure_stack_resource=$(get_setting AZURE_STACK_RESOURCE) \\
-  -v azure_stack_authentication=$(get_setting AZURE_STACK_AUTHENTICATION) \\
-  -l ~/example_manifests/azure-stack-ca-cert.yml
-EOF
-else
-  cat >> "$home_dir/deploy_bosh.sh" << EOF
+cat >> "$home_dir/deploy_bosh.sh" << EOF
   -o ~/example_manifests/use-managed-disks.yml
 EOF
-fi
 chmod 777 $home_dir/deploy_bosh.sh
 
 cat > "$home_dir/deploy_cloud_foundry.sh" << EOF
@@ -205,27 +175,10 @@ bosh -n -d cf deploy ~/example_manifests/cf-deployment.yml \\
   --vars-store=~/cf-deployment-vars.yml \\
   -o ~/example_manifests/azure.yml \\
   -o ~/example_manifests/scale-to-one-az.yml \\
+  -o ~/example_manifests/small-vm.yml \\
 EOF
-if [ "$environment" = "AzureChinaCloud" ]; then
-  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -o ~/example_manifests/use-azure-storage-blobstore.yml \\
-  -o ~/example_manifests/use-mirror-releases-for-cf.yml \\
-  -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io \\
-  -v environment=$(get_setting ENVIRONMENT) \\
-  -v blobstore_storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
-  -v blobstore_storage_access_key=$(get_setting DEFAULT_STORAGE_ACCESS_KEY) \\
-  -v app_package_directory_key=cc-packages \\
-  -v buildpack_directory_key=cc-buildpack \\
-  -v droplet_directory_key=cc-droplet \\
-  -v resource_directory_key=cc-resource \\
-EOF
-elif [ "$environment" = "AzureStack" ]; then
-  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -o ~/example_manifests/use-compiled-releases.yml \\
-  -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io \\
-EOF
-else
-  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+
+cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
   -o ~/example_manifests/use-compiled-releases.yml \\
   -o ~/example_manifests/use-azure-storage-blobstore.yml \\
   -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io \\
@@ -237,40 +190,6 @@ else
   -v droplet_directory_key=cc-droplet \\
   -v resource_directory_key=cc-resource \\
 EOF
-fi
-
-if [ "${debug_mode}" == "enabled" ]; then
-  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -o ~/example_manifests/debug.yml \\
-EOF
-fi
-
-if [ "${use_vcontainer}" == "enabled" ]; then
-  aci_location=$(get_setting ACI_LOCATION)
-  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -v tenant_id=${tenant_id} \\
-  -v client_id=${client_id} \\
-  -v client_secret="$(client_secret_or_certificate)" \\
-  -v subscription_id=$(get_setting SUBSCRIPTION_ID) \\
-  -v aci_resource_group=$(get_setting ACI_RESOURCE_GROUP) \\
-  -v aci_location="$(get_setting ACI_LOCATION)" \\
-  -v aci_storage_id="$(get_setting ACI_STORAGE_ACCOUNT_NAME)" \\
-  -v aci_storage_secret="$(get_setting ACI_STORAGE_ACCOUNT_KEY)" \\
-  -o ~/example_manifests/aci.yml \\
-EOF
-  smb_proxy_ip=$(get_setting SMB_PROXY_IP)
-  if [[ ! -z "${smb_proxy_ip}" ]]; then
-    cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -v smb_proxy_ip="$(get_setting SMB_PROXY_IP)" \\
-  -v smb_proxy_port="$(get_setting SMB_PROXY_PORT)" \\
-  -o ~/example_manifests/aci-use-smb-proxy.yml \\
-EOF
-  fi
-else
-  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
-  -o ~/example_manifests/no-aci.yml \\
-EOF
-fi
 
 chmod 777 $home_dir/deploy_cloud_foundry.sh
 

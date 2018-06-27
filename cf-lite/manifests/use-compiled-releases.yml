@@ -124,15 +124,15 @@
 - path: /releases/name=php-buildpack/sha1
   type: replace
   value: 7fec6f105f3b9acadab401e47075fe01b3017dc7
-- path: /releases/name=cf-smoke-tests/url
-  type: replace
-  value: https://storage.googleapis.com/cf-deployment-compiled-releases/cf-smoke-tests-40.0.3-ubuntu-trusty-3586.7-20180509-180051-150574673.tgz
-- path: /releases/name=cf-smoke-tests/version
-  type: replace
-  value: 40.0.3
-- path: /releases/name=cf-smoke-tests/sha1
-  type: replace
-  value: 913f4d0c1ad2375cf7ab939d50ad9465dbe83c81
+# - path: /releases/name=cf-smoke-tests/url
+#   type: replace
+#   value: https://storage.googleapis.com/cf-deployment-compiled-releases/cf-smoke-tests-40.0.3-ubuntu-trusty-3586.7-20180509-180051-150574673.tgz
+# - path: /releases/name=cf-smoke-tests/version
+#   type: replace
+#   value: 40.0.3
+# - path: /releases/name=cf-smoke-tests/sha1
+#   type: replace
+#   value: 913f4d0c1ad2375cf7ab939d50ad9465dbe83c81
 - path: /releases/name=java-buildpack/url
   type: replace
   value: https://storage.googleapis.com/cf-deployment-compiled-releases/java-buildpack-4.10-ubuntu-trusty-3586.7-20180509-175935-172978628.tgz
@@ -225,11 +225,11 @@
   value:
     os: ubuntu-trusty
     version: "3586.7"
-- path: /releases/name=cf-smoke-tests/stemcell?
-  type: replace
-  value:
-    os: ubuntu-trusty
-    version: "3586.7"
+# - path: /releases/name=cf-smoke-tests/stemcell?
+#   type: replace
+#   value:
+#     os: ubuntu-trusty
+#     version: "3586.7"
 - path: /releases/name=cf-syslog-drain/stemcell?
   type: replace
   value:

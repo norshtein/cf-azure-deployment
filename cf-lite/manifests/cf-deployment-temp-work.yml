@@ -2,11 +2,11 @@
 name: cf
 manifest_version: v1.31.0
 update:
-  canaries: 1
-  canary_watch_time: 30000-1200000
-  max_in_flight: 1
-  serial: true
-  update_watch_time: 5000-1200000
+  canaries: 100 # TODO define a better number.
+  canary_watch_time: 30000-12000000 # TODO define a better number.
+  max_in_flight: 100 # TODO define a better number.
+  serial: false
+  update_watch_time: 5000-12000000 # TODO define a better number.
 addons:
 - name: metron_agent
   include:
@@ -23,23 +23,23 @@ addons:
             cert: "((loggregator_tls_metron.certificate))"
             key: "((loggregator_tls_metron.private_key))"
 instance_groups:
-- name: all-in-one-1 # consul, nats, adapter, database and diego-api
+- name: all-in-one
   azs:
   - z1
   - z2
   - z3
   instances: 3
-  persistent_disk_type: 100GB
+  persistent_disk_type: 100GB # TODO verify this.
   vm_type: minimal
   vm_extensions:
-  - 100GB_ephemeral_disk
-  - cf-router-network-properties
+  - 100GB_ephemeral_disk # TODO verify this.
   stemcell: default
   update:
-    serial: true
+    serial: false
   networks:
   - name: default
   jobs:
+  # consul region starts
   - name: consul_agent
     release: consul
     consumes:
@@ -55,14 +55,6 @@ instance_groups:
         agent:
           mode: server
           domain: cf.internal
-          services:
-            silk-controller:
-              name: silk-controller
-            uaa: {}
-            doppler:
-              name: doppler
-            gorouter: {}
-            routing-api: {}
         encrypt_keys:
         - "((consul_encrypt_key))"
         agent_cert: "((consul_agent.certificate))"
@@ -70,6 +62,14 @@ instance_groups:
         ca_cert: "((consul_agent_ca.certificate))"
         server_cert: "((consul_server.certificate))"
         server_key: "((consul_server.private_key))"
+        services:
+            doppler:
+              name: doppler
+            # loggregator_trafficcontroller: {}
+            # reverse_log_proxy: {}
+  # consul region ends
+
+  # nats region starts
   - name: nats
     release: nats
     provides:
@@ -81,12 +81,15 @@ instance_groups:
         prof_port: 0 # port exposed
         password: "((nats_password))"
         user: nats
+  # nats region ends
+
+  # adapter region starts
   - name: adapter
     release: cf-syslog-drain
     properties:
       scalablesyslog:
         adapter:
-          health: 8070 # listen on. origin 8080, we use health port to start with 807x
+          health: 8080 # listen on.
           port: 4443 # listen on.
           tls:
             ca: "((loggregator_ca.certificate))"
@@ -102,6 +105,9 @@ instance_groups:
             key: "((adapter_rlp_tls.private_key))"
             cn: reverselogproxy
         metric_ingress_addr: "localhost:3458"
+  # adapter region ends
+
+  # database region starts
   - name: mysql
     release: cf-mysql
     properties:
@@ -155,6 +161,112 @@ instance_groups:
           consul_enabled: true
           consul_service_name: "sql-db"
           health_port: 1936
+  # database region ends
+
+  # cc-worker region starts
+  - name: cloud_controller_worker
+    release: capi
+    properties:
+      cc:
+        db_encryption_key: "((cc_db_encryption_key))"
+        internal_api_password: "((cc_internal_api_password))"
+        staging_upload_user: staging_user
+        staging_upload_password: "((cc_staging_upload_password))"
+        resource_pool: *blobstore-properties
+        packages: *blobstore-properties
+        droplets: *blobstore-properties
+        buildpacks: *blobstore-properties
+        mutual_tls: *cc_mutual_tls
+        external_port: 9022
+        tls_port: 9023
+      ccdb: *ccdb
+      system_domain: "((system_domain))"
+      routing_api: *routing_api
+      ssl:
+        skip_cert_verify: true
+      uaa:
+        ca_cert: "((uaa_ca.certificate))"
+        clients:
+          cc-service-dashboards:
+            secret: "((uaa_clients_cc-service-dashboards_secret))"
+          cc_routing:
+            secret: "((uaa_clients_cc-routing_secret))"
+        # ssl:
+        #   port: 8443
+  # cc-worker region ends
+
+  # doppler region starts
+  - name: doppler
+    release: loggregator
+    provides:
+      doppler: {as: doppler, shared: true}
+    properties:
+      doppler:
+        disable_announce: true
+        health_addr: "localhost:14825" # port exposed
+        grpc_port: 8082 # port exposed
+        pprof_port: 0 # port exposed
+      loggregator:
+        disable_syslog_drains: true
+        tls:
+          ca_cert: "((loggregator_ca.certificate))"
+          doppler:
+            cert: "((loggregator_tls_doppler.certificate))"
+            key: "((loggregator_tls_doppler.private_key))"
+      metron_endpoint:
+        host: "127.0.0.1"
+        grpc_port: 3458
+  # doppler region ends
+
+  # tcp_router region starts
+  - name: tcp_router
+    release: routing
+    properties:
+      metron:
+        port: 3457 # port exposed
+      routing_api:
+        port: 3000 # port exposed
+      tcp_router:
+        health_check_port: 80 # port exposed
+        oauth_secret: "((uaa_clients_tcp_router_secret))"
+        router_group: default-tcp
+      uaa:
+        ca_cert: "((uaa_ca.certificate))"
+        tls_port: 8443
+  # tcp_router region ends
+
+  # diego-api region starts
+  # diego-api region ends
+
+  # log-api region starts
+  # log-api region ends
+  
+- name: diego-api
+  migrated_from:
+  - name: diego-bbs
+  azs:
+  - z1
+  - z2
+  instances: 2
+  vm_type: small
+  stemcell: default
+  update:
+    serial: false
+  networks:
+  - name: default
+  jobs:
+  - name: consul_agent
+    release: consul
+    consumes:
+      consul_common: {from: consul_common_link}
+      consul_server: nil
+      consul_client: {from: consul_client_link}
+    properties:
+      consul:
+        agent:
+          services:
+            silk-controller:
+              name: silk-controller
   - name: cfdot
     release: diego
     properties:
@@ -252,6 +364,27 @@ instance_groups:
         ca_cert: "((loggregator_ca.certificate))"
         cert: "((loggregator_tls_metron.certificate))"
         key: "((loggregator_tls_metron.private_key))"
+- name: uaa
+  azs:
+  - z1
+  - z2
+  instances: 2
+  vm_type: minimal
+  stemcell: default
+  networks:
+  - name: default
+  jobs:
+  - name: consul_agent
+    release: consul
+    consumes:
+      consul_common: {from: consul_common_link}
+      consul_server: nil
+      consul_client: {from: consul_client_link}
+    properties:
+      consul:
+        agent:
+          services:
+            uaa: {}
   - name: uaa
     release: uaa
     properties:
@@ -269,7 +402,7 @@ instance_groups:
               certificate: "((uaa_login_saml.certificate))"
               passphrase: ""
       uaa:
-        port: 8081 # port exposed, origin 8080.
+        port: 8080 # port exposed
         ssl:
           port: 8443 # port exposed
         sslCertificate: "((uaa_ssl.certificate))"
@@ -388,7 +521,7 @@ instance_groups:
             name: uaa-healthcheck
             script_path: "/var/vcap/jobs/uaa/bin/health_check"
           name: uaa
-          port: 8081 # port exposed, origin 8080, modified to 8081.
+          port: 8080
           registration_interval: 10s
           tags:
             component: uaa
@@ -409,143 +542,14 @@ instance_groups:
           statsd_injector:
             cert: "((loggregator_tls_statsdinjector.certificate))"
             key: "((loggregator_tls_statsdinjector.private_key))"
-  - name: gorouter
-    release: routing
-    properties:
-      router:
-        debug_address: "127.0.0.1:17003" # port exposed
-        port: 80 # port exposed, listen on.
-        enable_ssl: true
-        tls_pem:
-        - cert_chain: "((router_ssl.certificate))"
-          private_key: "((router_ssl.private_key))"
-        status:
-          port: 8080 # port exposed, /varz /routes listen on.
-          password: "((router_status_password))"
-          user: router-status
-        route_services_secret: "((router_route_services_secret))"
-        tracing:
-          enable_zipkin: true
-      routing_api:
-        port: 3000 # port exposed
-        enabled: true
-      uaa:
-        clients:
-          gorouter:
-            secret: "((uaa_clients_gorouter_secret))"
-        ca_cert: "((uaa_ca.certificate))"
-        ssl:
-          port: 8443
-  - name: tcp_router
-    release: routing
-    properties:
-      metron:
-        port: 3457 # port exposed
-      routing_api:
-        port: 3000 # port exposed
-        uri: http://routing-api.service.cf.internal # port exposed
-      tcp_router:
-        debug_address: "127.0.0.1:17004" # port exposed
-        health_check_port: 70 # port exposed, origin 80. all health port changed from xx80 to xx70
-        oauth_secret: "((uaa_clients_tcp_router_secret))"
-        router_group: default-tcp
-      uaa:
-        token_endpoint: uaa.service.cf.internal # port exposed
-        ca_cert: "((uaa_ca.certificate))"
-        tls_port: 8443
-  - name: routing-api
-    release: routing
-    properties:
-      routing_api:
-        admin_port: 15897 # port exposed
-        port: 3000 # port exposed
-        statsd_endpoint: "localhost:8125" # port exposed
-        debug_address: "127.0.0.1:17002" # port exposed
-        system_domain: "((system_domain))"
-        router_groups:
-        - name: default-tcp
-          type: tcp
-          reservable_ports: 1024-1123
-        sqldb:
-          host: sql-db.service.cf.internal
-          type: mysql
-          port: 3306
-          schema: routing-api
-          username: routing-api
-          password: "((routing_api_database_password))"
-        locket:
-          api_location: "locket.service.cf.internal:8891"
-          ca_cert: "((service_cf_internal_ca.certificate))"
-          client_cert: "((diego_locket_client.certificate))"
-          client_key: "((diego_locket_client.private_key))"
-      consul:
-        servers: "http://127.0.0.1:8500" # port exposed
-      dns_health_check_host: uaa.service.cf.internal # port exposed
-      metron:
-        port: 3457 # port exposed
-      uaa:
-        ca_cert: "((uaa_ca.certificate))"
-        tls_port: 8443
-- name: singleton-blobstore  # will be removed by use-azure-storage-blobstore.yml
-  migrated_from:
-  - name: blobstore
-  azs:
-  - z1
-  instances: 1
-  vm_type: small
-  persistent_disk_type: 100GB
-  stemcell: default
-  update:
-    serial: true
-  networks:
-  - name: default
-  jobs:
-  - name: consul_agent
-    release: consul
-    consumes:
-      consul_common: {from: consul_common_link}
-      consul_server: nil
-      consul_client: {from: consul_client_link}
-    properties:
-      consul:
-        agent:
-          services:
-            blobstore: {}
-  - name: blobstore
-    release: capi
-    properties:
-      system_domain: "((system_domain))"
-      blobstore:
-        admin_users:
-        - username: blobstore-user
-          password: "((blobstore_admin_users_password))"
-        secure_link:
-          secret: "((blobstore_secure_link_secret))"
-        tls:
-          cert: "((blobstore_tls.certificate))"
-          private_key: "((blobstore_tls.private_key))"
-  - name: route_registrar
-    release: routing
-    properties:
-      route_registrar:
-        routes:
-        - name: blobstore
-          port: 8080
-          registration_interval: 20s
-          tags:
-            component: blobstore
-          uris:
-          - blobstore.((system_domain))
-
-- name: all-in-one-2 # api and the cc-worker, diego-cell, log-api, we need this seperated because the cloud_controller_ng's pre-start used the database.
+- name: api
   azs:
   - z1
   - z2
   instances: 2
-  persistent_disk_type: 100GB
   vm_type: small
   vm_extensions:
-  - 100GB_ephemeral_disk
+  - 50GB_ephemeral_disk
   stemcell: default
   networks:
   - name: default
@@ -559,19 +563,11 @@ instance_groups:
     properties:
       consul:
         agent:
-          # node_name_includes_id: true
           services:
             cloud_controller_ng: {}
+            routing-api: {}
             policy-server-internal:
               name: policy-server
-            # gorouter: {}
-            loggregator_trafficcontroller: {}
-            reverse_log_proxy: {}
-  - name: cflinuxfs2-rootfs-setup
-    release: cflinuxfs2
-    properties:
-      cflinuxfs2-rootfs:
-        trusted_certs: ((application_ca.certificate))
   - name: cloud_controller_ng
     release: capi
     provides:
@@ -619,10 +615,10 @@ instance_groups:
         diego:
           bbs:
             url: https://bbs.service.cf.internal:8889 # port exposed
-          file_server_url: http://file-server.service.cf.internal:8380 # port exposed, origin 8080f.
+          file_server_url: http://file-server.service.cf.internal:8080 # port exposed
           cc_uploader_url: https://cc-uploader.service.cf.internal:9091 # port exposed
         loggregator:
-          internal_url: "http://loggregator-trafficcontroller.service.cf.internal:8481" # port exposed
+          internal_url: "http://loggregator-trafficcontroller.service.cf.internal:8081" # port exposed
         stacks:
         - name: cflinuxfs2
           description: Cloud Foundry Linux-based filesystem
@@ -632,7 +628,6 @@ instance_groups:
         default_staging_security_groups:
         - public_networks
         - dns
-        # 10.255.0.0/16
         security_group_definitions:
         - name: public_networks
           rules:
@@ -645,11 +640,6 @@ instance_groups:
           - destination: 172.32.0.0-192.167.255.255
             protocol: all
           - destination: 192.169.0.0-255.255.255.255
-            protocol: all
-          # add the rules to allow the container running in the same box.
-          - destination: 10.0.0.0-10.255.255.255
-            protocol: all
-          - destination: 12.0.0.0-12.255.255.255
             protocol: all
         - name: dns
           rules:
@@ -731,43 +721,44 @@ instance_groups:
           registration_interval: 20s
           uris:
           - api.((system_domain))/networking
-        - name: loggregator
-          port: 8580 # port exposed, origin 8080
-          registration_interval: 20s
-          uris:
-          - loggregator.((system_domain))
-        - name: doppler
-          port: 8481 # port exposed, origin 8081
-          registration_interval: 20s
-          uris:
-          - doppler.((system_domain))
-          - "*.doppler.((system_domain))"
   - name: statsd_injector
     release: statsd-injector
     properties: *statsd_injector_properties
   - name: file_server
     release: diego
     properties:
-      diego:
-        file_server:
-          debug_addr: "127.0.0.1:17001" # port exposed, origin 17005.
-          listen_addr: "0.0.0.0:8380" # port exposed, origin 8080, listen on.
       loggregator: *diego_loggregator_client_properties
+  - name: routing-api
+    release: routing
+    properties:
+      routing_api:
+        system_domain: "((system_domain))"
+        router_groups:
+        - name: default-tcp
+          type: tcp
+          reservable_ports: 1024-1123
+        sqldb:
+          host: sql-db.service.cf.internal
+          type: mysql
+          port: 3306
+          schema: routing-api
+          username: routing-api
+          password: "((routing_api_database_password))"
+        locket:
+          api_location: "locket.service.cf.internal:8891"
+          ca_cert: "((service_cf_internal_ca.certificate))"
+          client_cert: "((diego_locket_client.certificate))"
+          client_key: "((diego_locket_client.private_key))"
+      uaa:
+        ca_cert: "((uaa_ca.certificate))"
+        tls_port: 8443
   - name: policy-server
     release: cf-networking
     properties:
       cf_networking:
         policy_server:
-          debug_port: 31821 # port exposed
-          listen_ip: 0.0.0.0 # port exposed
-          listen_port: 4002 # port exposed
-          uaa_hostname: uaa.service.cf.internal # port exposed
-          uaa_port: 8443 # port exposed
           uaa_client_secret: ((uaa_clients_network_policy_secret))
           uaa_ca: ((uaa_ca.certificate))
-          cc_hostname: cloud-controller-ng.service.cf.internal # port exposed
-          cc_port: 9022 # port exposed
-          metron_port: 3457 # port exposed
           database:
             type: mysql
             username: network_policy
@@ -780,27 +771,14 @@ instance_groups:
     properties:
       cf_networking:
         policy_server_internal:
-          listen_ip: 0.0.0.0 # port exposed
-          debug_port: 31945 # port exposed
-          health_check_port: 31946 # port exposed
-          internal_listen_port: 4003 # port exposed
-          metron_port: 3457 # port exposed
           ca_cert: ((network_policy_ca.certificate))
           server_cert: ((network_policy_server.certificate))
           server_key: ((network_policy_server.private_key))
   - name: cc_uploader
     release: capi
     properties:
-      internal_hostname: cc-uploader.service.cf.internal # port exposed
-      http_port: 9090 # port exposed
-      https_port: 9091 # port exposed
       capi:
         cc_uploader:
-          bind_addr: "0.0.0.0" # port exposed
-          debug_bind_addr: "127.0.0.1" # port exposed
-          debug_port: 17018 # port exposed
-          dropsonde_port: 3457 # port exposed
-          consul_agent_port: 8500 # port exposed
           cc:
             ca_cert: "((service_cf_internal_ca.certificate))"
             client_cert: "((cc_bridge_cc_uploader.certificate))"
@@ -827,36 +805,84 @@ instance_groups:
     release: ruby-buildpack
   - name: staticfile-buildpack
     release: staticfile-buildpack
-  - name: cloud_controller_worker
-    release: capi
-    properties:
-      cc:
-        db_encryption_key: "((cc_db_encryption_key))"
-        internal_api_password: "((cc_internal_api_password))"
-        staging_upload_user: staging_user
-        staging_upload_password: "((cc_staging_upload_password))"
-        resource_pool: *blobstore-properties
-        packages: *blobstore-properties
-        droplets: *blobstore-properties
-        buildpacks: *blobstore-properties
-        mutual_tls: *cc_mutual_tls
-        external_port: 9022
-        tls_port: 9023
-      ccdb: *ccdb
-      system_domain: "((system_domain))"
-      routing_api: *routing_api
-      ssl:
-        skip_cert_verify: true
-      uaa:
-        ca_cert: "((uaa_ca.certificate))"
-        clients:
-          cc-service-dashboards:
-            secret: "((uaa_clients_cc-service-dashboards_secret))"
-          cc_routing:
-            secret: "((uaa_clients_cc-routing_secret))"
-        # ssl:
-        #   port: 8443
 
+- name: router
+  azs:
+  - z1
+  - z2
+  instances: 2
+  vm_type: minimal
+  vm_extensions:
+  - cf-router-network-properties
+  stemcell: default
+  update:
+    serial: false
+  networks:
+  - name: default
+  jobs:
+  - name: consul_agent
+    release: consul
+    consumes:
+      consul_common: {from: consul_common_link}
+      consul_server: nil
+      consul_client: {from: consul_client_link}
+    properties:
+      consul:
+        agent:
+          services:
+            gorouter: {}
+  - name: gorouter
+    release: routing
+    properties:
+      router:
+        debug_address: "127.0.0.1:17002" # port exposed
+        port: 80 # port exposed
+        enable_ssl: true
+        tls_pem:
+        - cert_chain: "((router_ssl.certificate))"
+          private_key: "((router_ssl.private_key))"
+        status:
+          port: 8080 # port exposed
+          password: "((router_status_password))"
+          user: router-status
+        route_services_secret: "((router_route_services_secret))"
+        tracing:
+          enable_zipkin: true
+      routing_api:
+        port: 3000 # port exposed
+        enabled: true
+      uaa:
+        clients:
+          gorouter:
+            secret: "((uaa_clients_gorouter_secret))"
+        ca_cert: "((uaa_ca.certificate))"
+        ssl:
+          port: 8443
+
+- name: scheduler
+  azs:
+  - z1
+  - z2
+  instances: 2
+  migrated_from:
+  - {name: cc-bridge}
+  - {name: cc-clock}
+  - {name: diego-brain}
+  vm_type: minimal
+  # vm_extensions:
+  # - diego-ssh-proxy-network-properties
+  stemcell: default
+  update:
+    serial: false
+  networks:
+  - name: default
+  jobs:
+  - name: consul_agent
+    release: consul
+    consumes:
+      consul_common: {from: consul_common_link}
+      consul_server: nil
+      consul_client: {from: consul_client_link}
   - name: cfdot
     release: diego
     properties:
@@ -866,7 +892,7 @@ instance_groups:
     properties:
       diego:
         auctioneer:
-          debug_addr: "127.0.0.1:17005" # port exposed
+          debug_addr: "127.0.0.1:17001" # port exposed
           listen_addr: "0.0.0.0:9016" # port exposed
           bbs: &diego_bbs_client_properties
             api_location: "bbs.service.cf.internal:8889" # port exposed
@@ -902,7 +928,7 @@ instance_groups:
         diego:
           bbs:
             url: https://bbs.service.cf.internal:8889 # port exposed
-          file_server_url: http://file-server.service.cf.internal:8380 # port exposed
+          file_server_url: http://file-server.service.cf.internal:8080 # port exposed
           cc_uploader_url: http://cc-uploader.service.cf.internal:9090 # port exposed
       credhub_api:
         hostname: "credhub.service.cf.internal" # port exposed
@@ -921,6 +947,9 @@ instance_groups:
             secret: "((uaa_clients_cc-routing_secret))"
         ssl:
           port: 8443 # port exposed
+  - name: statsd_injector
+    release: statsd-injector
+    properties: *statsd_injector_properties
   - name: tps
     release: capi
     properties:
@@ -928,7 +957,7 @@ instance_groups:
         tps:
           dropsonde_port: 3457 # port exposed
           consul_agent_port: 8500 # port exposed
-          traffic_controller_url: "ws://loggregator-trafficcontroller.service.cf.internal:8481" # port exposed
+          traffic_controller_url: "ws://loggregator-trafficcontroller.service.cf.internal:8081" # port exposed
           bbs: *diego_bbs_client_properties
           watcher:
             debug_addr: "127.0.0.1:17015" # port exposed
@@ -946,8 +975,8 @@ instance_groups:
     properties:
       diego:
         ssh_proxy:
-          listen_addr: "0.0.0.0:2224" # port exposed
-          healthcheck_listen_addr: "0.0.0.0:2225" # port exposed
+          listen_addr: "0.0.0.0:2222" # port exposed
+          healthcheck_listen_addr: "0.0.0.0:2223" # port exposed
           debug_addr: "127.0.0.1:17016" # port exposed
           enable_cf_auth: true
           host_key: "((diego_ssh_proxy_host_key.private_key))"
@@ -968,7 +997,7 @@ instance_groups:
         adapter:
           port: 4443 # port exposed
         scheduler:
-          health: 8071 # port exposed
+          health: 8080
           api:
             url: https://cloud-controller-ng.service.cf.internal:9023
           tls:
@@ -982,30 +1011,34 @@ instance_groups:
               cert: "((scheduler_api_tls.certificate))"
               key: "((scheduler_api_tls.private_key))"
               cn: "cloud-controller-ng.service.cf.internal"
-  - name: doppler
-    release: loggregator
-    provides:
-      doppler: {as: doppler, shared: true}
+
+- name: diego-cell
+  azs:
+  - z1
+  - z2
+  instances: 2
+  vm_type: small-highmem
+  vm_extensions:
+  - 100GB_ephemeral_disk
+  stemcell: default
+  networks:
+  - name: default
+  jobs:
+  - name: consul_agent
+    release: consul
+    consumes:
+      consul_common: {from: consul_common_link}
+      consul_server: nil
+      consul_client: {from: consul_client_link}
     properties:
-      metron_endpoint:
-        host: "127.0.0.1" # port exposed
-        dropsonde_port: 3457 # port exposed
-        grpc_port: 3458 # port exposed
-      doppler:
-        disable_announce: true
-        health_addr: "localhost:14825" # port exposed
-        grpc_port: 8082 # port exposed
-        pprof_port: 0 # port exposed
-      loggregator:
-        disable_syslog_drains: true
-        tls:
-          ca_cert: "((loggregator_ca.certificate))"
-          doppler:
-            cert: "((loggregator_tls_doppler.certificate))"
-            key: "((loggregator_tls_doppler.private_key))"
-      metron_endpoint:
-        host: "127.0.0.1"
-        grpc_port: 3458
+      consul:
+        agent:
+          node_name_includes_id: true
+  - name: cflinuxfs2-rootfs-setup
+    release: cflinuxfs2
+    properties:
+      cflinuxfs2-rootfs:
+        trusted_certs: ((application_ca.certificate))
   - name: garden
     release: garden-runc
     properties:
@@ -1033,7 +1066,7 @@ instance_groups:
           instance_identity_ca_cert: ((diego_instance_identity_ca.certificate))
           instance_identity_key: ((diego_instance_identity_ca.private_key))
         rep:
-          debug_addr: "127.0.0.1:17006" # port exposed
+          debug_addr: "127.0.0.1:17008" # port exposed
           listen_addr_admin: "127.0.0.1:1800" # port exposed
           advertise_domain: "cell.service.cf.internal" # port exposed
           listen_addr_securable: "0.0.0.0:1801" # port exposed
@@ -1052,6 +1085,10 @@ instance_groups:
         ca_cert: "((service_cf_internal_ca.certificate))"
         cert: "((diego_rep_agent_v2.certificate))"
         key: "((diego_rep_agent_v2.private_key))"
+  - name: cfdot
+    release: diego
+    properties:
+      tls: *cfdot_tls_client_properties
   - name: route_emitter
     release: diego
     properties:
@@ -1064,7 +1101,7 @@ instance_groups:
             ca_cert: "((service_cf_internal_ca.certificate))"
             client_cert: "((diego_bbs_client.certificate))"
             client_key: "((diego_bbs_client.private_key))"
-          debug_addr: "127.0.0.1:17007" # port exposed
+          debug_addr: "127.0.0.1:17009" # port exposed
           healthcheck_address: "127.0.0.1:17011" # port exposed
           nats:
             port: 4222 # port exposed
@@ -1107,7 +1144,6 @@ instance_groups:
     release: cf-networking
     properties:
       cf_networking:
-        disable: false
         vtep_port: 4789 # port exposed
         rep_listen_addr_admin: 127.0.0.1:1800 # port exposed
         silk_daemon:
@@ -1124,13 +1160,33 @@ instance_groups:
     release: cf-networking
     properties:
       cf_networking:
-        disable: false
-        iptables_logging: true
-        iptables_denied_logs_per_sec: 1
-        iptables_accepted_udp_logs_per_sec: 100
         silk_daemon:
           listen_port: 23954 # port exposed
 
+- name: log-api
+  azs:
+  - z1
+  - z2
+  instances: 2
+  vm_type: minimal
+  stemcell: default
+  update:
+    serial: false
+  networks:
+  - name: default
+  jobs:
+  - name: consul_agent
+    release: consul
+    consumes:
+      consul_common: {from: consul_common_link}
+      consul_server: nil
+      consul_client: {from: consul_client_link}
+    properties:
+      consul:
+        agent:
+          services:
+            loggregator_trafficcontroller: {}
+            reverse_log_proxy: {}
   - name: loggregator_trafficcontroller
     release: loggregator
     consumes:
@@ -1140,7 +1196,7 @@ instance_groups:
         internal_url: https://uaa.service.cf.internal:8443 # port exposed
         ca_cert: "((uaa_ca.certificate))"
       loggregator:
-        outgoing_dropsonde_port: 8481 # port exposed, origin 8081
+        outgoing_dropsonde_port: 8081 # port exposed
         tls:
           cc_trafficcontroller:
             cert: "((loggregator_tls_cc_tc.certificate))"
@@ -1161,7 +1217,7 @@ instance_groups:
           ca_cert: "((service_cf_internal_ca.certificate))"
       doppler:
         grpc_port: 8082 # port exposed
-        outgoing_port: 8481 # port exposed, origin 8081, listen on. will be registered in route_registrar? I guess.
+        outgoing_port: 8081 # port exposed
       metron_endpoint:
         host: "127.0.0.1" # port exposed
         dropsonde_port: 3457 # port exposed
@@ -1177,7 +1233,7 @@ instance_groups:
     properties:
       reverse_log_proxy:
         egress:
-          port: 8182 # port exposed, original is 8082, to keep the same as the grpc_port? i guess.
+          port: 8182 # port exposed, original is 8082
         health_addr: "localhost:0" # port exposed
         pprof:
           port: 0 # port exposed
@@ -1192,6 +1248,22 @@ instance_groups:
       metron_endpoint:
         host: "127.0.0.1" # port exposed
         grpc_port: 3458 # port exposed
+  - name: route_registrar
+    release: routing
+    properties:
+      route_registrar:
+        routes:
+        - name: loggregator
+          port: 8080
+          registration_interval: 20s
+          uris:
+          - loggregator.((system_domain))
+        - name: doppler
+          port: 8081
+          registration_interval: 20s
+          uris:
+          - doppler.((system_domain))
+          - "*.doppler.((system_domain))"
 
 variables:
 - name: blobstore_admin_users_password
