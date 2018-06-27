@@ -33,6 +33,7 @@ instance_groups:
   vm_type: minimal
   vm_extensions:
   - 100GB_ephemeral_disk
+  - cf-router-network-properties
   stemcell: default
   update:
     serial: true
@@ -60,6 +61,7 @@ instance_groups:
             uaa: {}
             doppler:
               name: doppler
+            gorouter: {}
         encrypt_keys:
         - "((consul_encrypt_key))"
         agent_cert: "((consul_agent.certificate))"
@@ -406,6 +408,50 @@ instance_groups:
           statsd_injector:
             cert: "((loggregator_tls_statsdinjector.certificate))"
             key: "((loggregator_tls_statsdinjector.private_key))"
+  - name: gorouter
+    release: routing
+    properties:
+      router:
+        debug_address: "127.0.0.1:17003" # port exposed
+        port: 80 # port exposed, listen on.
+        enable_ssl: true
+        tls_pem:
+        - cert_chain: "((router_ssl.certificate))"
+          private_key: "((router_ssl.private_key))"
+        status:
+          port: 8080 # port exposed, /varz /routes listen on.
+          password: "((router_status_password))"
+          user: router-status
+        route_services_secret: "((router_route_services_secret))"
+        tracing:
+          enable_zipkin: true
+      routing_api:
+        port: 3000 # port exposed
+        enabled: true
+      uaa:
+        clients:
+          gorouter:
+            secret: "((uaa_clients_gorouter_secret))"
+        ca_cert: "((uaa_ca.certificate))"
+        ssl:
+          port: 8443
+  - name: tcp_router
+    release: routing
+    properties:
+      metron:
+        port: 3457 # port exposed
+      routing_api:
+        port: 3000 # port exposed
+        uri: http://routing-api.service.cf.internal # port exposed
+      tcp_router:
+        debug_address: "127.0.0.1:17004" # port exposed
+        health_check_port: 70 # port exposed, origin 80. all health port changed from xx80 to xx70
+        oauth_secret: "((uaa_clients_tcp_router_secret))"
+        router_group: default-tcp
+      uaa:
+        token_endpoint: uaa.service.cf.internal # port exposed
+        ca_cert: "((uaa_ca.certificate))"
+        tls_port: 8443
 - name: singleton-blobstore  # will be removed by use-azure-storage-blobstore.yml
   migrated_from:
   - name: blobstore
@@ -456,6 +502,7 @@ instance_groups:
             component: blobstore
           uris:
           - blobstore.((system_domain))
+
 - name: all-in-one-2 # api and the cc-worker, diego-cell, log-api, we need this seperated because the cloud_controller_ng's pre-start used the database.
   azs:
   - z1
@@ -465,7 +512,6 @@ instance_groups:
   vm_type: small
   vm_extensions:
   - 100GB_ephemeral_disk
-  - cf-router-network-properties
   stemcell: default
   networks:
   - name: default
@@ -485,7 +531,7 @@ instance_groups:
             routing-api: {}
             policy-server-internal:
               name: policy-server
-            gorouter: {}
+            # gorouter: {}
             loggregator_trafficcontroller: {}
             reverse_log_proxy: {}
   - name: cflinuxfs2-rootfs-setup
@@ -810,50 +856,7 @@ instance_groups:
             secret: "((uaa_clients_cc-routing_secret))"
         # ssl:
         #   port: 8443
-  - name: gorouter
-    release: routing
-    properties:
-      router:
-        debug_address: "127.0.0.1:17003" # port exposed
-        port: 80 # port exposed, listen on.
-        enable_ssl: true
-        tls_pem:
-        - cert_chain: "((router_ssl.certificate))"
-          private_key: "((router_ssl.private_key))"
-        status:
-          port: 8080 # port exposed, /varz /routes listen on.
-          password: "((router_status_password))"
-          user: router-status
-        route_services_secret: "((router_route_services_secret))"
-        tracing:
-          enable_zipkin: true
-      routing_api:
-        port: 3000 # port exposed
-        enabled: true
-      uaa:
-        clients:
-          gorouter:
-            secret: "((uaa_clients_gorouter_secret))"
-        ca_cert: "((uaa_ca.certificate))"
-        ssl:
-          port: 8443
-  - name: tcp_router
-    release: routing
-    properties:
-      metron:
-        port: 3457 # port exposed
-      routing_api:
-        port: 3000 # port exposed
-        uri: http://routing-api.service.cf.internal # port exposed
-      tcp_router:
-        debug_address: "127.0.0.1:17004" # port exposed
-        health_check_port: 70 # port exposed, all health port changed from xx80 to xx70
-        oauth_secret: "((uaa_clients_tcp_router_secret))"
-        router_group: default-tcp
-      uaa:
-        token_endpoint: uaa.service.cf.internal # port exposed
-        ca_cert: "((uaa_ca.certificate))"
-        tls_port: 8443
+
   - name: cfdot
     release: diego
     properties:
@@ -1117,13 +1120,6 @@ instance_groups:
         silk_controller:
           hostname: "silk-controller.service.cf.internal" # port exposed
           listen_port: 4103 # port exposed
-  - name: iptables-logger
-    release: cf-networking
-    properties:
-      cf_networking:
-        iptables_logger:
-          kernel_log_file: /var/log/kern-iptables.log
-          metron_port: 3457
   - name: cni
     release: cf-networking
     properties:
@@ -1196,22 +1192,6 @@ instance_groups:
       metron_endpoint:
         host: "127.0.0.1" # port exposed
         grpc_port: 3458 # port exposed
-  # - name: route_registrar
-  #   release: routing
-  #   properties:
-  #     route_registrar:
-  #       routes:
-  #       - name: loggregator
-  #         port: 8580 # port exposed, origin 8080
-  #         registration_interval: 20s
-  #         uris:
-  #         - loggregator.((system_domain))
-  #       - name: doppler
-  #         port: 8481 # port exposed, origin 8081
-  #         registration_interval: 20s
-  #         uris:
-  #         - doppler.((system_domain))
-  #         - "*.doppler.((system_domain))"
 
 variables:
 - name: blobstore_admin_users_password
