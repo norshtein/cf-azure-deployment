@@ -62,6 +62,7 @@ instance_groups:
             doppler:
               name: doppler
             gorouter: {}
+            routing-api: {}
         encrypt_keys:
         - "((consul_encrypt_key))"
         agent_cert: "((consul_agent.certificate))"
@@ -452,6 +453,39 @@ instance_groups:
         token_endpoint: uaa.service.cf.internal # port exposed
         ca_cert: "((uaa_ca.certificate))"
         tls_port: 8443
+  - name: routing-api
+    release: routing
+    properties:
+      routing_api:
+        admin_port: 15897 # port exposed
+        port: 3000 # port exposed
+        statsd_endpoint: "localhost:8125" # port exposed
+        debug_address: "127.0.0.1:17002" # port exposed
+        system_domain: "((system_domain))"
+        router_groups:
+        - name: default-tcp
+          type: tcp
+          reservable_ports: 1024-1123
+        sqldb:
+          host: sql-db.service.cf.internal
+          type: mysql
+          port: 3306
+          schema: routing-api
+          username: routing-api
+          password: "((routing_api_database_password))"
+        locket:
+          api_location: "locket.service.cf.internal:8891"
+          ca_cert: "((service_cf_internal_ca.certificate))"
+          client_cert: "((diego_locket_client.certificate))"
+          client_key: "((diego_locket_client.private_key))"
+      consul:
+        servers: "http://127.0.0.1:8500" # port exposed
+      dns_health_check_host: uaa.service.cf.internal # port exposed
+      metron:
+        port: 3457 # port exposed
+      uaa:
+        ca_cert: "((uaa_ca.certificate))"
+        tls_port: 8443
 - name: singleton-blobstore  # will be removed by use-azure-storage-blobstore.yml
   migrated_from:
   - name: blobstore
@@ -528,7 +562,6 @@ instance_groups:
           # node_name_includes_id: true
           services:
             cloud_controller_ng: {}
-            routing-api: {}
             policy-server-internal:
               name: policy-server
             # gorouter: {}
@@ -720,39 +753,6 @@ instance_groups:
           debug_addr: "127.0.0.1:17001" # port exposed, origin 17005.
           listen_addr: "0.0.0.0:8380" # port exposed, origin 8080, listen on.
       loggregator: *diego_loggregator_client_properties
-  - name: routing-api
-    release: routing
-    properties:
-      routing_api:
-        admin_port: 15897 # port exposed
-        port: 3000 # port exposed
-        statsd_endpoint: "localhost:8125" # port exposed
-        debug_address: "127.0.0.1:17002" # port exposed
-        system_domain: "((system_domain))"
-        router_groups:
-        - name: default-tcp
-          type: tcp
-          reservable_ports: 1024-1123
-        sqldb:
-          host: sql-db.service.cf.internal
-          type: mysql
-          port: 3306
-          schema: routing-api
-          username: routing-api
-          password: "((routing_api_database_password))"
-        locket:
-          api_location: "locket.service.cf.internal:8891"
-          ca_cert: "((service_cf_internal_ca.certificate))"
-          client_cert: "((diego_locket_client.certificate))"
-          client_key: "((diego_locket_client.private_key))"
-      consul:
-        servers: "http://127.0.0.1:8500" # port exposed
-      dns_health_check_host: uaa.service.cf.internal # port exposed
-      metron:
-        port: 3457 # port exposed
-      uaa:
-        ca_cert: "((uaa_ca.certificate))"
-        tls_port: 8443
   - name: policy-server
     release: cf-networking
     properties:
