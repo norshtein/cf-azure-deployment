@@ -11,7 +11,7 @@ output "vnet-name" {
 }
 
 output "bosh-default-storage-name" {
-  value = "boshdefaultsa"
+  value = "${lower(var.prefix)}tfboshsa"
 }
 
 output "bosh-subnet-name" {
